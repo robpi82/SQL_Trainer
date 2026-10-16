@@ -20,20 +20,39 @@ import { useProgress } from './progress/ProgressContext';
 import { exerciseById, lessonById } from './content';
 import { dueReviews } from './progress/stats';
 
-type NavItem = { to: string; label: string; match: string[]; icon: IconName; mobile?: boolean };
+type NavItem = { to: string; label: string; match: string[]; icon: IconName; main?: boolean };
+/** main = Hauptpunkte (Seitenleiste oben, Leiste unten auf dem Smartphone); übrige unter „Weitere“ */
 const NAV: NavItem[] = [
-  { to: '/', label: 'Sternenkarte', match: [''], icon: 'karte', mobile: true },
-  { to: '/uebersicht', label: 'Übersicht', match: ['uebersicht'], icon: 'uebersicht' },
-  { to: '/lernpfad', label: 'Lernpfad', match: ['lernpfad', 'lektion'], icon: 'pfad' },
-  { to: '/unterricht', label: 'Expedition: Unterricht', match: ['unterricht'], icon: 'rakete', mobile: true },
-  { to: '/ueben', label: 'Üben', match: ['ueben'], icon: 'balken', mobile: true },
+  { to: '/', label: 'Sternenkarte', match: [''], icon: 'karte', main: true },
+  { to: '/lernpfad', label: 'Expedition', match: ['lernpfad', 'lektion'], icon: 'rakete', main: true },
+  { to: '/ueben', label: 'Üben', match: ['ueben'], icon: 'balken', main: true },
+  { to: '/medaillen', label: 'Medaillen', match: ['medaillen'], icon: 'pokal', main: true },
+  { to: '/nachschlagen', label: 'SQL-Lexikon', match: ['nachschlagen'], icon: 'buch', main: true },
+  { to: '/unterricht', label: 'Unterricht', match: ['unterricht'], icon: 'station' },
   { to: '/wiederholen', label: 'Wiederholen', match: ['wiederholen'], icon: 'wiederholen' },
   { to: '/test', label: 'Wissenstest', match: ['test'], icon: 'test' },
   { to: '/sandbox', label: 'SQL-Sandbox', match: ['sandbox'], icon: 'terminal' },
-  { to: '/medaillen', label: 'Medaillen', match: ['medaillen'], icon: 'pokal', mobile: true },
-  { to: '/nachschlagen', label: 'SQL-Lexikon', match: ['nachschlagen'], icon: 'buch', mobile: true },
+  { to: '/uebersicht', label: 'Übersicht', match: ['uebersicht'], icon: 'uebersicht' },
   { to: '/fortschritt', label: 'Fortschritt & Daten', match: ['fortschritt'], icon: 'daten' },
 ];
+
+function Brand({ space, className = 'brand' }: { space: boolean; className?: string }) {
+  return (
+    <a className={className} href="#/">
+      <svg className="brand-planet" viewBox="0 0 40 40" aria-hidden="true">
+        <defs>
+          <linearGradient id={`${className}-g`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#8fd3ff" />
+            <stop offset="100%" stopColor="#7c5cff" />
+          </linearGradient>
+        </defs>
+        <circle cx="20" cy="20" r="11" fill={`url(#${className}-g)`} />
+        <ellipse cx="20" cy="21" rx="18" ry="6" fill="none" stroke="#b7a6ff" strokeWidth="2.2" transform="rotate(-22 20 20)" />
+      </svg>
+      <span className="brand-text">{space ? <>SPACE <br />ACADEMY</> : 'SQL verstehen'}</span>
+    </a>
+  );
+}
 
 export function App() {
   const route = useRoute();
@@ -122,30 +141,30 @@ export function App() {
   const days = streak(state);
   const medalCount = medals(state).filter((m) => m.earned).length;
 
+  const themeSelect = (
+    <label className="theme-select">
+      <span className="sr-only">Design</span>
+      <select value={setting} onChange={(e) => setSetting(e.target.value as ThemeSetting)} aria-label="Design">
+        <option value="weltraum">Design: Weltraum</option>
+        <option value="system">Design: Klassisch (System)</option>
+        <option value="hell">Design: Klassisch hell</option>
+        <option value="dunkel">Design: Klassisch dunkel</option>
+      </select>
+    </label>
+  );
+
   return (
     <DarkContext.Provider value={dark}>
       <SpaceContext.Provider value={space}>
       <a className="skip-link" href="#main" onClick={(e) => { e.preventDefault(); mainRef.current?.focus(); }}>
         Zum Inhalt springen
       </a>
-      <div className="shell">
+      <div className={first === '' ? 'shell is-map' : 'shell'}>
         <header className="topbar">
           <button type="button" className="btn btn-ghost menu-btn" aria-expanded={menuOpen} aria-controls="nav" onClick={() => setMenuOpen(!menuOpen)}>
             ☰<span className="menu-word"> Menü</span>
           </button>
-          <a className="brand" href="#/">
-            <svg className="brand-planet" viewBox="0 0 40 40" aria-hidden="true">
-              <defs>
-                <linearGradient id="brand-g" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#8fd3ff" />
-                  <stop offset="100%" stopColor="#7c5cff" />
-                </linearGradient>
-              </defs>
-              <circle cx="20" cy="20" r="11" fill="url(#brand-g)" />
-              <ellipse cx="20" cy="21" rx="18" ry="6" fill="none" stroke="#b7a6ff" strokeWidth="2.2" transform="rotate(-22 20 20)" />
-            </svg>
-            <span className="brand-text">{space ? <>SPACE<br />ACADEMY</> : 'SQL verstehen'}</span>
-          </a>
+          <Brand space={space} />
           <span className="badge dialect-badge" title="Alle Übungen verwenden den SQL-Dialekt von SQLite (im Browser über sql.js)">
             SQLite
           </span>
@@ -163,15 +182,7 @@ export function App() {
               </a>
             </div>
           )}
-          <label className="theme-select">
-            <span className="sr-only">Design</span>
-            <select value={setting} onChange={(e) => setSetting(e.target.value as ThemeSetting)} aria-label="Design">
-              <option value="weltraum">Design: Weltraum</option>
-              <option value="system">Design: Klassisch (System)</option>
-              <option value="hell">Design: Klassisch hell</option>
-              <option value="dunkel">Design: Klassisch dunkel</option>
-            </select>
-          </label>
+          {!space && themeSelect}
           {space && (
             <a className="avatar" href="#/fortschritt" title="Fortschritt & Daten" aria-label="Fortschritt und Daten">
               <span aria-hidden="true">👩‍🚀</span>
@@ -179,8 +190,9 @@ export function App() {
           )}
         </header>
         <nav id="nav" className={menuOpen ? 'sidenav open' : 'sidenav'} aria-label="Hauptnavigation">
-          <ul>
-            {NAV.map((n) => (
+          <Brand space={space} className="nav-brand" />
+          <ul className="nav-main">
+            {NAV.filter((n) => n.main).map((n) => (
               <li key={n.to}>
                 <a href={href(n.to)} aria-current={n.match.includes(activeNav) ? 'page' : undefined}>
                   <span className="nav-label">
@@ -192,18 +204,33 @@ export function App() {
               </li>
             ))}
           </ul>
-          <p className="nav-foot small muted">
-            Fortschritt wird nur lokal in diesem Browser gespeichert. Sicherung unter „Fortschritt &amp; Daten“.
-          </p>
+          <p className="nav-group">Weitere</p>
+          <ul className="nav-more">
+            {NAV.filter((n) => !n.main).map((n) => (
+              <li key={n.to}>
+                <a href={href(n.to)} aria-current={n.match.includes(activeNav) ? 'page' : undefined}>
+                  <span className="nav-label">
+                    <Icon name={n.icon} className="nav-icon" />
+                    {n.label}
+                  </span>
+                  {n.to === '/wiederholen' && due > 0 && <span className="nav-count" aria-label={`${due} fällig`}>{due}</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <div className="nav-foot small muted">
+            {space && themeSelect}
+            <p>Fortschritt wird nur lokal in diesem Browser gespeichert. Sicherung unter „Fortschritt &amp; Daten“.</p>
+          </div>
         </nav>
         <main id="main" ref={mainRef} tabIndex={-1} className="main">
           {page}
         </main>
         <nav className="bottomnav" aria-label="Schnellnavigation">
-          {NAV.filter((n) => n.mobile).map((n) => (
+          {NAV.filter((n) => n.main).map((n) => (
             <a key={n.to} href={href(n.to)} aria-current={n.match.includes(activeNav) ? 'page' : undefined}>
               <Icon name={n.icon} />
-              <span>{n.label.replace('Expedition: ', '').replace('SQL-', '')}</span>
+              <span>{n.label.replace('SQL-', '')}</span>
             </a>
           ))}
         </nav>

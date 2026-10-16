@@ -5,14 +5,20 @@ import { STATUS_POINTS, statusOf, type ProgressState } from '../progress/model';
 /**
  * Sternenkarte: Die Module des Lernpfads sind zu „Systemen“ gruppiert.
  * Jedes System hat einen Stern (Farbe) und Planeten (= Module bzw. Unterrichtstage).
- * Positionen beziehen sich auf eine Karte von 1280 × 760.
+ * Positionen beziehen sich auf eine Karte von MAP_W × MAP_H (wird verschoben und gezoomt).
  */
+export const MAP_W = 2280;
+export const MAP_H = 1500;
+
+export type PlanetKind = 'fels' | 'erde' | 'gas' | 'eis' | 'ring';
+
 export interface Planet {
   id: string;
   title: string;
   lessonId?: string;
   planned: boolean;
   color: string;
+  kind: PlanetKind;
 }
 
 export interface StarSystem {
@@ -22,39 +28,55 @@ export interface StarSystem {
   star: string; // Farbe des Sterns
   x: number;
   y: number;
+  /** Beschriftung über oder unter dem System */
+  label: 'oben' | 'unten';
+  /** Symbol links in der Beschriftung */
+  icon?: 'flagge' | 'funkeln';
   /** Unterricht statt Lernpfad */
   course?: boolean;
   planets: Planet[];
 }
 
-const PLANET_COLORS = ['#c97b4a', '#4a8ccf', '#d9a066', '#8fb3a0', '#b56a8c', '#7a86c9', '#c9b18a'];
+const PLANET_STYLES: { color: string; kind: PlanetKind }[] = [
+  { color: '#2f74d8', kind: 'erde' },
+  { color: '#d0773a', kind: 'gas' },
+  { color: '#b4553c', kind: 'fels' },
+  { color: '#5aa6e0', kind: 'eis' },
+  { color: '#d6a46a', kind: 'ring' },
+  { color: '#8c6a52', kind: 'fels' },
+  { color: '#c25f8a', kind: 'gas' },
+  { color: '#7e8fd0', kind: 'eis' },
+  { color: '#e0a050', kind: 'gas' },
+];
 
 function modulePlanets(ids: number[]): Planet[] {
   return ids.map((id, i) => {
     const m = moduleById.get(id)!;
-    return { id: `m${id}`, title: m.title, lessonId: m.status === 'verfügbar' ? m.lessonId : undefined, planned: m.status !== 'verfügbar', color: PLANET_COLORS[(id + i) % PLANET_COLORS.length] };
+    const st = PLANET_STYLES[(id * 4 + i) % PLANET_STYLES.length];
+    return { id: `m${id}`, title: m.title, lessonId: m.status === 'verfügbar' ? m.lessonId : undefined, planned: m.status !== 'verfügbar', ...st };
   });
 }
 
 export const SYSTEMS: StarSystem[] = [
-  { id: 'signale', name: 'Die ersten Signale', subtitle: 'Grundlagen · SELECT bis NULL', star: '#5be37d', x: 175, y: 590, planets: modulePlanets([1, 2, 3, 4, 5, 6]) },
-  { id: 'rechenwerke', name: 'Die Rechenwerke', subtitle: 'Berechnungen, Datum & CASE', star: '#ffb347', x: 215, y: 215, planets: modulePlanets([7, 8, 13]) },
-  { id: 'analyse', name: 'Das Analyse-System', subtitle: 'Aggregate, GROUP BY & HAVING', star: '#c46bff', x: 640, y: 150, planets: modulePlanets([9, 10]) },
-  { id: 'verbunden', name: 'Verbundene Welten', subtitle: 'JOINs', star: '#ffc23d', x: 560, y: 445, planets: modulePlanets([11]) },
-  { id: 'tiefen', name: 'Die Tiefen des Datenraums', subtitle: 'Unterabfragen & CTEs', star: '#6fb6ff', x: 905, y: 335, planets: modulePlanets([12, 17]) },
-  { id: 'baumeister', name: 'Die Baumeister', subtitle: 'Daten ändern & Tabellen bauen', star: '#ff6f61', x: 1095, y: 590, planets: modulePlanets([14, 15]) },
-  { id: 'expeditionen', name: 'Expeditionen', subtitle: 'Praxisprojekte', star: '#ff9a3c', x: 1100, y: 150, planets: modulePlanets([16]) },
+  { id: 'signale', name: 'Die ersten Signale', subtitle: 'Grundlagen · SELECT bis NULL', star: '#5be37d', x: 456, y: 1116, label: 'unten', planets: modulePlanets([1, 2, 3, 4, 5, 6]) },
+  { id: 'rechenwerke', name: 'Die Rechenwerke', subtitle: 'Berechnungen, Datum & CASE', star: '#ffb347', x: 432, y: 516, label: 'unten', planets: modulePlanets([7, 8, 13]) },
+  { id: 'analyse', name: 'Das Analyse-System', subtitle: 'GROUP BY & HAVING', star: '#c46bff', x: 1152, y: 348, label: 'oben', icon: 'funkeln', planets: modulePlanets([9, 10]) },
+  { id: 'verbunden', name: 'Verbundene Welten', subtitle: 'JOINs', star: '#ffc23d', x: 1056, y: 840, label: 'unten', planets: modulePlanets([11]) },
+  { id: 'tiefen', name: 'Die Tiefen des Datenraums', subtitle: 'CTEs & Unterabfragen', star: '#6fb6ff', x: 1596, y: 1152, label: 'unten', planets: modulePlanets([12, 17]) },
+  { id: 'baumeister', name: 'Die Baumeister', subtitle: 'Daten ändern & Tabellen bauen', star: '#ff6f61', x: 1776, y: 696, label: 'unten', planets: modulePlanets([14, 15]) },
+  { id: 'expeditionen', name: 'Expeditionen', subtitle: 'Praxisprojekte', star: '#ff9a3c', x: 1872, y: 240, label: 'unten', icon: 'flagge', planets: modulePlanets([16]) },
   {
     id: 'station',
     name: 'Station CBW',
     subtitle: 'Unterricht · Dezernat 512',
     star: '#36d6c3',
-    x: 815,
-    y: 640,
+    x: 2064,
+    y: 1116,
+    label: 'unten',
     course: true,
     planets: ['k02', 'k03', 'k04'].map((id, i) => {
       const l = lessonById.get(id) as Lesson;
-      return { id, title: `${l.course!.label}: ${l.title}`, lessonId: id, planned: false, color: PLANET_COLORS[(i + 2) % PLANET_COLORS.length] };
+      return { id, title: `${l.course!.label}: ${l.title}`, lessonId: id, planned: false, ...PLANET_STYLES[(i * 2 + 1) % PLANET_STYLES.length] };
     }),
   },
 ];

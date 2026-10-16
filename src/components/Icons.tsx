@@ -53,6 +53,15 @@ const paths: Record<string, JSX.Element> = {
   plus: <path d="M12 5v14M5 12h14" {...P} />,
   minus: <path d="M5 12h14" {...P} />,
   pfeil: <path d="M9 6l6 6-6 6" {...P} />,
+  flagge: <path d="M6 21V4M6 4h11l-2.5 4L17 12H6" fill="currentColor" stroke="currentColor" strokeWidth={1.4} strokeLinejoin="round" />,
+  funkeln: <path d="M12 2.5c.6 4.6 2.9 6.9 7.5 7.5-4.6.6-6.9 2.9-7.5 7.5-.6-4.6-2.9-6.9-7.5-7.5 4.6-.6 6.9-2.9 7.5-7.5Z" fill="currentColor" />,
+  check: <path d="M6.5 12.5l3.5 3.5 7.5-8" {...P} strokeWidth={2.6} />,
+  planeten: (
+    <>
+      <circle cx="12" cy="12" r="4.5" {...P} />
+      <ellipse cx="12" cy="12" rx="10" ry="3.6" transform="rotate(-20 12 12)" {...P} />
+    </>
+  ),
   play: <path d="M8 5v14l11-7L8 5Z" fill="currentColor" stroke="none" />,
 };
 

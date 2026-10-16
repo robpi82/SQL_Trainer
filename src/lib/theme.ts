@@ -29,9 +29,10 @@ export function useTheme() {
   }, []);
   const space = setting === 'weltraum';
   const dark = space || setting === 'dunkel' || (setting === 'system' && sysDark);
+  // Schon beim Rendern setzen (nicht erst im Effekt), damit Seiten beim ersten Layout das richtige Design messen
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.documentElement.dataset.design = space ? 'space' : 'classic';
   useEffect(() => {
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-    document.documentElement.dataset.design = space ? 'space' : 'classic';
     save(KEYS.settings, { ...load(KEYS.settings, {}), theme: setting, v: SETTINGS_VERSION });
   }, [dark, space, setting]);
   return { setting, setSetting, dark, space };

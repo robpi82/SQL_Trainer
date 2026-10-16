@@ -217,9 +217,10 @@ Lernfortschritt (localStorage) und Übungsdatenbanken (nur im Arbeitsspeicher de
 Standarddesign ist „Weltraum“. Oben rechts lässt sich jederzeit auf **Klassisch** (System, hell oder dunkel) umstellen.
 
 - **Sternenkarte** (Startseite): Jedes Sternsystem bündelt mehrere Module, jeder Planet ist eine Lektion. Ein Klick auf einen Planeten öffnet die Lektion. Das System „Station CBW“ enthält den Unterricht (Dezernat 512).
+- **Karte bedienen**: Mit der Maus ziehen (oder wischen bzw. Pfeiltasten) verschiebt die Karte, + und − zoomen. Beim Öffnen steht „Du bist hier“ in der Mitte.
 - **Erkundet %** entspricht den Fortschrittspunkten: selbstständig gelöst 1 Punkt, mit Hilfe ½ Punkt.
 - **Schloss-Symbol** heißt „Vorwissen empfohlen“. Es sperrt nichts, alle Systeme bleiben frei zugänglich.
 - **XP**: selbstständig gelöst 50 XP, mit Hilfe 20 XP, Musterlösung angesehen 0 XP. Gezählt wird der beste Status je Aufgabe, mehrfaches Lösen bringt keine zusätzlichen XP.
 - **Serie**: Tage in Folge, an denen mindestens eine Aufgabe richtig gelöst wurde.
 - **Medaillen**: feste Kriterien, einsehbar unter „Medaillen“. Es gibt keine Ranglisten und keine Bezahlinhalte.
-- **Smartphone**: Die Karte wird zur Systemliste, unten erscheint eine Navigationsleiste.
+- **Smartphone**: Das gewählte System erscheint als Karte über der unteren Navigationsleiste. Der Pfeil klappt die Planetenliste auf.
