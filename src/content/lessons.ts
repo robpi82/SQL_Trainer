@@ -743,4 +743,76 @@ export const LESSONS: Lesson[] = [
       ],
     },
   },
+  {
+    id: 'm16',
+    moduleId: 16,
+    title: 'Analyseaufgaben und Praxisprojekte',
+    goals: [
+      'Du übersetzt eine fachliche Frage in eine genau definierte Kennzahl.',
+      'Du bestimmst vor dem Schreiben, was eine Ergebniszeile darstellen soll (Granularität).',
+      'Du baust komplexe Abfragen schrittweise auf und prüfst Zwischenergebnisse.',
+      'Du plausibilisierst Ergebnisse, bevor du sie weitergibst.',
+    ],
+    explanation: [
+      'In der Praxis lautet eine Aufgabe selten „Schreibe einen LEFT JOIN“. Sie lautet „Welche Kategorie läuft am schlechtesten?“ Dieses Modul bringt kein neues SQL, sondern eine **Arbeitsmethode**, mit der du bekannte Bausteine sicher kombinierst. Sie hilft auch in Prüfungen.',
+      '**1. Frage präzisieren und Kennzahl definieren.** Was genau wird gezählt oder summiert? Welcher Zeitraum? Zählen Stornos mit? Was passiert mit NULL, mit offenen Fällen, mit Datensätzen ohne Zuordnung? Schreibe die Definition auf, bevor du SQL schreibst.',
+      '**2. Granularität festlegen:** „Das Ergebnis hat **eine Zeile pro …**“ – pro Kunde, pro Monat, pro Kategorie. Daraus folgt direkt, wonach gruppiert wird.',
+      '**3. Tabellen und Verknüpfungen bestimmen.** Wo stehen die benötigten Spalten? Welcher Weg führt im Schema dorthin? Müssen Datensätze ohne Partner erhalten bleiben (LEFT JOIN)?',
+      '**4. Schrittweise aufbauen.** Erst den JOIN mit `SELECT *` und `LIMIT` ansehen: Was ist jetzt eine Zeile? Dann filtern (WHERE), dann gruppieren und aggregieren, dann HAVING, ORDER BY und LIMIT. Nach jedem Schritt ausführen.',
+      '**5. Plausibilisieren.** Ergeben die Teilsummen die Gesamtsumme? Stimmen Anteile zusammen etwa 100 %? Passt die Zeilenzahl zur Erwartung („eine Zeile pro Kunde“ → 12 Zeilen)? Stichprobe: Einen Wert von Hand nachrechnen.',
+      '**6. Ergebnis einordnen.** Fallzahlen nennen, Ausreißer erwähnen, Definition mitliefern. Ein Durchschnitt aus drei Tickets ist kein belastbarer Trend.',
+      'Die Aufgaben dieses Moduls sind in drei kleine **Praxisprojekte** gegliedert – Vertrieb, Forschung und Support. Jedes beginnt leichter und wird dann anspruchsvoller.',
+    ],
+    terms: [
+      { term: 'Kennzahl', definition: 'Genau definierte Messgröße, z. B. „Umsatz nicht stornierter Bestellungen je Monat“.' },
+      { term: 'Granularität', definition: 'Was eine Zeile darstellt – vor und nach dem JOIN bzw. im Ergebnis.' },
+      { term: 'Plausibilisierung', definition: 'Prüfen, ob ein Ergebnis stimmig ist: Summen, Anteile, Zeilenzahlen, Stichproben.' },
+      { term: 'Fallzahl', definition: 'Anzahl der Datensätze, auf der eine Kennzahl beruht.' },
+    ],
+    example: {
+      db: 'vertrieb',
+      tables: [
+        { label: 'Schritt 1 – Was ist nach dem JOIN eine Zeile? (Auszug)', sql: "SELECT b.bestellung_id, b.status, b.bestelldatum, bp.position_id, bp.menge * bp.einzelpreis AS wert\nFROM bestellungen AS b\nJOIN bestellpositionen AS bp ON bp.bestellung_id = b.bestellung_id\nORDER BY b.bestellung_id\nLIMIT 6;" },
+      ],
+      sql: "-- Frage: Umsatz und Anzahl Bestellungen je Monat (ohne Stornos)\n-- Granularität: eine Zeile pro Monat\nSELECT strftime('%Y-%m', b.bestelldatum) AS monat,\n       COUNT(DISTINCT b.bestellung_id) AS bestellungen,\n       COUNT(*) AS positionen,\n       ROUND(SUM(bp.menge * bp.einzelpreis), 2) AS umsatz\nFROM bestellungen AS b\nJOIN bestellpositionen AS bp ON bp.bestellung_id = b.bestellung_id\nWHERE b.status <> 'storniert'\nGROUP BY monat\nORDER BY monat;",
+      note: 'Im Auszug von Schritt 1 erscheint Bestellung 1 zweimal – nach dem JOIN ist eine Zeile eine **Position**. Deshalb zählt das Ergebnis Bestellungen mit `COUNT(DISTINCT …)`; `COUNT(*)` liefert die Positionen.',
+    },
+    steps: [
+      { code: '-- Frage / Granularität', text: 'Kommentare (mit `--`) halten die Definition direkt in der Abfrage fest.' },
+      { code: 'FROM … JOIN …', text: 'Positionen liefern den Umsatz, Bestellungen Datum und Status. Eine Zeile = eine Position.' },
+      { code: "WHERE b.status <> 'storniert'", text: 'Kennzahldefinition umsetzen: Stornos vor dem Gruppieren entfernen.' },
+      { code: "GROUP BY monat", text: 'Granularität „eine Zeile pro Monat“.' },
+      { code: 'COUNT(DISTINCT b.bestellung_id)', text: 'Bestellungen zählen, nicht Positionen.' },
+      { code: 'ROUND(SUM(…), 2)', text: 'Umsatz je Monat, kaufmännisch gerundet.' },
+    ],
+    logicalOrder: ['FROM', 'JOIN', 'WHERE', 'GROUP BY', 'HAVING', 'SELECT', 'DISTINCT', 'ORDER BY', 'LIMIT'],
+    extraSections: [
+      {
+        title: 'Schritt 5 – Plausibilisieren: Stimmen die Summen?',
+        paragraphs: ['Die Summe der Monatsumsätze muss dem Gesamtumsatz ohne Gruppierung entsprechen. Eine einzige Gesamtzahl ist schnell berechnet und deckt viele Fehler auf, z. B. vergessene Filter oder vervielfachte Zeilen.'],
+        db: 'vertrieb',
+        sql: "SELECT ROUND(SUM(bp.menge * bp.einzelpreis), 2) AS gesamtumsatz,\n       COUNT(DISTINCT b.bestellung_id) AS bestellungen\nFROM bestellungen AS b\nJOIN bestellpositionen AS bp ON bp.bestellung_id = b.bestellung_id\nWHERE b.status <> 'storniert';",
+      },
+      {
+        title: 'Checkliste für jede Analyseaufgabe',
+        paragraphs: [
+          '- Kennzahl in einem Satz definiert (inkl. Zeitraum, Filter, Umgang mit NULL)?\n- „Eine Zeile pro …“ festgelegt?\n- Benötigte Tabellen und JOIN-Art (INNER oder LEFT) bestimmt?\n- Nach dem JOIN geprüft, was eine Zeile ist (Vervielfachung)?\n- WHERE für Zeilen, HAVING für Gruppen?\n- Ganzzahldivision vermieden (`100.0`)?\n- Sortierung eindeutig (zweites Sortierkriterium bei Gleichstand)?\n- Ergebnis plausibilisiert (Summen, Anteile, Zeilenzahl, Stichprobe)?',
+        ],
+      },
+    ],
+    dialectNotes: [
+      'Lange Analysen werden mit **CTEs** (`WITH zwischenergebnis AS (…) SELECT …`) übersichtlicher: Jeder Schritt bekommt einen Namen. CTEs funktionieren in SQLite, MySQL 8, PostgreSQL und SQL Server und sind als nächstes optionales Modul geplant.',
+      'Für Prozentwerte und Durchschnitte gilt in SQLite, PostgreSQL und SQL Server: Ganzzahl ÷ Ganzzahl schneidet ab. MySQL rechnet hier mit Nachkommastellen.',
+    ],
+    summary: {
+      merksatz: 'Erst definieren, dann schreiben: Kennzahl festlegen, „eine Zeile pro …“ bestimmen, Schritt für Schritt aufbauen und das Ergebnis plausibilisieren.',
+      fehler: [
+        'Sofort losschreiben, ohne die Kennzahl zu definieren – zwei Personen bekommen zwei verschiedene Ergebnisse.',
+        'Nach einem JOIN zählen oder mitteln, ohne zu prüfen, was eine Zeile ist (Positionen statt Bestellungen).',
+        'Stornos, offene Fälle oder NULL-Werte unbewusst ein- oder ausschließen.',
+        'Durch ein INNER JOIN Datensätze ohne Partner verlieren, die im Bericht als 0 erscheinen müssten.',
+        'Ergebnisse ohne Plausibilisierung und ohne Fallzahl weitergeben.',
+      ],
+    },
+  },
 ];

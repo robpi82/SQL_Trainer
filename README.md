@@ -10,8 +10,8 @@ Eine deutschsprachige Lern-App für SQL. Du schreibst echte Abfragen, sie werden
 
 | Bereich | Stand |
 |---|---|
-| Lernpfad | Module 1–15 vollständig ausgearbeitet (Lernziel → Erklärung → Beispiel → Schritt für Schritt → angeleitete Übung → Aufgaben → Zusammenfassung) |
-| Aufgaben | **106 Aufgaben** (82 davon in den Modulen 1–12: Grundlagen bis JOIN und Unterabfragen, 9 zu CASE WHEN, 9 zu CREATE TABLE), leicht/mittel/anspruchsvoll |
+| Lernpfad | Module 1–16 vollständig ausgearbeitet (Lernziel → Erklärung → Beispiel → Schritt für Schritt → angeleitete Übung → Aufgaben → Zusammenfassung) |
+| Aufgaben | **117 Aufgaben** (82 davon in den Modulen 1–12: Grundlagen bis JOIN und Unterabfragen, 9 zu CASE WHEN, 6 zu INSERT/UPDATE/DELETE, 9 zu CREATE TABLE, 11 Praxis- und Analyseaufgaben), leicht/mittel/anspruchsvoll |
 | Aufgabentypen | Abfrage schreiben, Fehler korrigieren, Abfrage ergänzen, Ergebnis vorhersagen, Erklären (Selbsteinschätzung mit Musterantwort) |
 | Prüfung | Ergebnisvergleich mit Duplikaten, optionaler Reihenfolge- und Spaltennamenprüfung, zusätzlichen Testdaten, Zustandsprüfung für INSERT/UPDATE/DELETE |
 | Hilfen | 3 Stufen (Denkanstoß → Schlüsselwörter → Gerüst), Musterlösung erst nach Bestätigung |
@@ -20,7 +20,7 @@ Eine deutschsprachige Lern-App für SQL. Du schreibst echte Abfragen, sie werden
 | Speicherung | Fortschritt dauerhaft im Browser (localStorage), JSON-Export/-Import, Zurücksetzen mit Bestätigung |
 | Oberfläche | Hell/Dunkel, Tastaturbedienung (Strg+Enter, Strg+Umschalt+Enter), Desktop und Tablet |
 
-**Noch nicht enthalten (als „geplant“ markiert):** Modul 16 (Praxisprojekte), CTEs und Window Functions.
+**Noch nicht enthalten (als „geplant“ markiert):** CTEs (WITH) und Window Functions.
 
 ---
 
