@@ -37,6 +37,14 @@ describe('Aufgabeninhalte', () => {
         expect(r.status).not.toBe('correct');
       });
     }
+    if (ex.check?.kind === 'state' && ex.check.probes?.length) {
+      const probes = ex.check.probes;
+      it(`${ex.id}: Musterlösung verhält sich bei allen Testanweisungen wie dokumentiert`, async () => {
+        const r = await backend.probe(ex.db, ex.solution, probes.map((p) => p.sql));
+        expect(r.main.ok).toBe(true);
+        probes.forEach((p, i) => expect(!r.probes[i].ok, `${p.label}: ${JSON.stringify(r.probes[i])}`).toBe(p.expectError));
+      });
+    }
     for (const alt of ex.tests?.accept ?? []) {
       it(`${ex.id}: Alternative akzeptiert: ${alt.slice(0, 60)}`, async () => {
         const r = await checkExercise(backend, ex, alt);

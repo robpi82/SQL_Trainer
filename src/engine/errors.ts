@@ -124,6 +124,42 @@ export function explainError(message: string, sql: string, schema?: TableInfo[])
     };
   }
 
+  if ((m = message.match(/table (\S+) has no column named (\S+)/i))) {
+    return {
+      category: 'unknown',
+      title: CATEGORY_LABEL.unknown,
+      explanation: [`Die Tabelle „${m[1]}“ hat keine Spalte „${m[2]}“. Prüfe die Spaltenliste im INSERT und die Schreibweise in der Tabellendefinition.`],
+      original,
+    };
+  }
+
+  if ((m = message.match(/table (\S+) has (\d+) columns but (\d+) values were supplied/i)) || (m = message.match(/(\d+) values for (\d+) columns/i))) {
+    return {
+      category: 'logic',
+      title: 'Anzahl der Werte passt nicht',
+      explanation: ['Die Zahl der Werte in VALUES stimmt nicht mit der Zahl der Spalten überein. Gib beim INSERT die Spaltenliste an – dann ist klar, welcher Wert in welche Spalte gehört.'],
+      original,
+    };
+  }
+
+  if ((m = message.match(/duplicate column name: (\S+)/i))) {
+    return {
+      category: 'logic',
+      title: 'Spalte doppelt',
+      explanation: [`Die Spalte „${m[1]}“ ist in der Tabelle schon vorhanden bzw. wurde zweimal definiert.`],
+      original,
+    };
+  }
+
+  if (/Cannot add a NOT NULL column with default value NULL/i.test(message)) {
+    return {
+      category: 'constraint',
+      title: CATEGORY_LABEL.constraint,
+      explanation: ['Eine neue Pflichtspalte braucht einen DEFAULT-Wert – sonst hätten die vorhandenen Zeilen keinen Wert.'],
+      original,
+    };
+  }
+
   if ((m = message.match(/no such function: (\S+)/i))) {
     const fn = m[1].toUpperCase();
     return {

@@ -101,32 +101,76 @@ export class SqlCore {
   schema(dbId: string): TableInfo[] {
     const db = this.fresh(dbId);
     try {
-      const tables = db
-        .exec("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY rowid")[0]
-        ?.values.map((v) => String(v[0])) ?? [];
-      return tables.map((t) => {
-        const cols = db.exec(`PRAGMA table_info("${t}")`)[0]?.values ?? [];
-        const fks = db.exec(`PRAGMA foreign_key_list("${t}")`)[0]?.values ?? [];
-        // foreign_key_list: id, seq, table, from, to, on_update, on_delete, match
-        const fkMap = new Map(fks.map((f) => [String(f[3]), { table: String(f[2]), column: String(f[4]) }]));
-        const count = Number(db.exec(`SELECT COUNT(*) FROM "${t}"`)[0].values[0][0]);
-        return {
-          name: t,
-          rowCount: count,
-          // table_info: cid, name, type, notnull, dflt_value, pk
-          columns: cols.map((c) => ({
-            name: String(c[1]),
-            type: String(c[2]),
-            notNull: Number(c[3]) === 1 || Number(c[5]) > 0,
-            pk: Number(c[5]) > 0,
-            fk: fkMap.get(String(c[1])),
-          })),
-        };
-      });
+      return schemaOf(db);
     } finally {
       db.close();
     }
   }
+
+  /** Schema der Arbeitsdatenbank – zeigt auch selbst angelegte Tabellen und Spalten. */
+  workingSchema(dbKey: string, dbId: string): TableInfo[] {
+    let db = this.working.get(dbKey);
+    if (!db) {
+      db = this.fresh(dbId);
+      this.working.set(dbKey, db);
+    }
+    return schemaOf(db);
+  }
+
+  /**
+   * Führt `sql` auf einer frischen Kopie aus und danach jede Testanweisung (`probes`) einzeln.
+   * Jede Testanweisung läuft in einem SAVEPOINT und wird anschließend zurückgerollt,
+   * damit sich die Tests nicht gegenseitig beeinflussen.
+   */
+  probe(dbId: string, sql: string, probes: string[], setup?: string): { main: ExecResult; probes: ExecResult[] } {
+    const db = this.fresh(dbId);
+    try {
+      if (setup) {
+        const s = this.run(db, setup);
+        if (!s.ok) throw new Error(`Interner Fehler in Testdaten: ${s.error}`);
+      }
+      const main = this.run(db, sql);
+      const results: ExecResult[] = [];
+      if (main.ok) {
+        for (const p of probes) {
+          db.exec('SAVEPOINT pruefung;');
+          results.push(this.run(db, p));
+          db.exec('ROLLBACK TO pruefung; RELEASE pruefung;');
+        }
+      }
+      return { main, probes: results };
+    } finally {
+      db.close();
+    }
+  }
+}
+
+function schemaOf(db: Database): TableInfo[] {
+  const tables =
+    db
+      .exec("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY rowid")[0]
+      ?.values.map((v) => String(v[0])) ?? [];
+  const pkOf = (t: string) =>
+    String(db.exec(`SELECT name FROM pragma_table_info('${t.replace(/'/g, "''")}') WHERE pk = 1`)[0]?.values[0]?.[0] ?? '');
+  return tables.map((t) => {
+    const cols = db.exec(`PRAGMA table_info("${t}")`)[0]?.values ?? [];
+    const fks = db.exec(`PRAGMA foreign_key_list("${t}")`)[0]?.values ?? [];
+    // foreign_key_list: id, seq, table, from, to, on_update, on_delete, match – „to“ ist NULL, wenn auf den Primärschlüssel verwiesen wird
+    const fkMap = new Map(fks.map((f) => [String(f[3]), { table: String(f[2]), column: f[4] === null ? pkOf(String(f[2])) : String(f[4]) }]));
+    const count = Number(db.exec(`SELECT COUNT(*) FROM "${t}"`)[0].values[0][0]);
+    return {
+      name: t,
+      rowCount: count,
+      // table_info: cid, name, type, notnull, dflt_value, pk
+      columns: cols.map((c) => ({
+        name: String(c[1]),
+        type: String(c[2]),
+        notNull: Number(c[3]) === 1 || Number(c[5]) > 0,
+        pk: Number(c[5]) > 0,
+        fk: fkMap.get(String(c[1])),
+      })),
+    };
+  });
 }
 
 function totalChanges(db: Database): number {

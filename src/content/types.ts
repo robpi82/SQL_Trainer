@@ -29,6 +29,12 @@ export interface StateCheck {
   /** Abfrage(n), mit denen der entstandene Datenbankzustand verglichen wird (mit ORDER BY!). */
   stateQueries: { label: string; sql: string }[];
   variants?: { description: string; setup: string }[];
+  /**
+   * Testanweisungen, die nach der Lösung einzeln ausgeführt werden (z. B. INSERTs, die eine Regel verletzen).
+   * Erwartet wird dasselbe Verhalten wie bei der Musterlösung: Fehler bzw. kein Fehler und – falls vorhanden – dasselbe Ergebnis.
+   * `expectError` dokumentiert das erwartete Verhalten und wird in den automatischen Tests überprüft.
+   */
+  probes?: { label: string; sql: string; expectError: boolean; hint: string }[];
 }
 
 export interface Exercise {
@@ -91,6 +97,7 @@ export interface Lesson {
   logicalOrder?: string[];
   /** Hinweise zu Unterschieden SQLite vs. MySQL/PostgreSQL/SQL Server */
   dialectNotes?: string[];
-  extraSections?: { title: string; paragraphs: string[]; sql?: string; db?: DbId }[];
+  /** expectError: Das Beispiel soll absichtlich einen Fehler zeigen (z. B. verletzter Constraint). */
+  extraSections?: { title: string; paragraphs: string[]; sql?: string; db?: DbId; expectError?: boolean }[];
   summary: { merksatz: string; fehler: string[] };
 }

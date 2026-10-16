@@ -14,5 +14,7 @@ export async function createNodeBackend(): Promise<SqlBackend & { core: SqlCore 
     reset: async (k) => core.reset(k),
     isolated: async (id, sql, setup, after) => core.isolated(id, sql, setup, after),
     schema: async (id) => core.schema(id),
+    workingSchema: async (k, id) => core.workingSchema(k, id),
+    probe: async (id, sql, probes, setup) => core.probe(id, sql, probes, setup),
   };
 }

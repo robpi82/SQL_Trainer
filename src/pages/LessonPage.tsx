@@ -127,7 +127,7 @@ export function LessonPage({ lessonId, section }: { lessonId?: string; section: 
             {s.sql && (
               <>
                 <pre className="code-block">{s.sql}</pre>
-                <QueryPreview db={s.db ?? lesson.example.db} sql={s.sql} />
+                <QueryPreview db={s.db ?? lesson.example.db} sql={s.sql} expectError={s.expectError} />
               </>
             )}
           </div>

@@ -222,10 +222,26 @@ export const REFERENCE: ReferenceEntry[] = [
   {
     id: 'createtable', title: 'CREATE TABLE', category: 'Tabellen anlegen', moduleId: 15, db: 'vertrieb',
     syntax: 'CREATE TABLE name (\n  id INTEGER PRIMARY KEY,\n  spalte TEXT NOT NULL,\n  fk_id INTEGER REFERENCES andere(id)\n);',
-    explanation: 'Legt eine neue Tabelle mit Spalten, Datentypen und Constraints an. (Ausführliche Lektion geplant.)',
+    explanation: 'Legt eine neue Tabelle mit Spalten, Datentypen und Constraints an. Nach der letzten Spalte steht kein Komma.',
     example: "CREATE TABLE lieferanten (\n  lieferant_id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL UNIQUE,\n  land TEXT DEFAULT 'DE'\n);\nSELECT * FROM lieferanten;",
     mistakes: ['Komma nach der letzten Spaltendefinition.', 'Fremdschlüssel auf nicht existierende Tabelle.'],
     dialect: 'SQLite ist bei Datentypen sehr flexibel (Type Affinity). Andere Datenbanken erzwingen VARCHAR(n), DECIMAL(p,s), DATE usw.',
+  },
+  {
+    id: 'constraints', title: 'Constraints (Regeln)', category: 'Tabellen anlegen', moduleId: 15, db: 'vertrieb',
+    syntax: "spalte TYP PRIMARY KEY\nspalte TYP NOT NULL\nspalte TYP UNIQUE\nspalte TYP DEFAULT wert\nspalte TYP CHECK (bedingung)\nspalte TYP REFERENCES tabelle(spalte)\nPRIMARY KEY (spalte1, spalte2)",
+    explanation: 'Regeln, die die Datenbank bei jedem INSERT und UPDATE prüft. Verstöße werden mit einer Fehlermeldung abgelehnt.',
+    example: "CREATE TABLE bewertungen (\n  bewertung_id INTEGER PRIMARY KEY,\n  produkt_id INTEGER NOT NULL REFERENCES produkte(produkt_id),\n  sterne INTEGER NOT NULL CHECK (sterne BETWEEN 1 AND 5),\n  kommentar TEXT DEFAULT ''\n);\nINSERT INTO bewertungen (bewertung_id, produkt_id, sterne) VALUES (1, 3, 4);\nSELECT * FROM bewertungen;",
+    mistakes: ['UNIQUE erlaubt mehrere NULL – für Pflichtfelder zusätzlich NOT NULL.', 'CHECK mit NULL gilt als erfüllt.', 'Fremdschlüssel erlauben NULL, solange kein NOT NULL gesetzt ist.'],
+    dialect: 'SQLite prüft Fremdschlüssel nur mit PRAGMA foreign_keys = ON (in dieser App immer aktiv).',
+  },
+  {
+    id: 'altertable', title: 'ALTER TABLE / DROP TABLE', category: 'Tabellen anlegen', moduleId: 15, db: 'forschung',
+    syntax: 'ALTER TABLE tabelle ADD COLUMN spalte TYP;\nALTER TABLE tabelle RENAME COLUMN alt TO neu;\nALTER TABLE tabelle RENAME TO neuer_name;\nDROP TABLE [IF EXISTS] tabelle;',
+    explanation: 'ALTER TABLE ändert eine bestehende Tabelle, ohne Daten zu verlieren. DROP TABLE löscht die Tabelle mit allen Daten.',
+    example: "ALTER TABLE stationen ADD COLUMN betreiber TEXT;\nUPDATE stationen SET betreiber = 'Meeresinstitut' WHERE aktiv = 1;\nSELECT station_id, name, betreiber FROM stationen;",
+    mistakes: ['DROP TABLE statt ALTER TABLE – alle Daten sind weg.', 'Neue Spalte mit NOT NULL ohne DEFAULT – vorhandene Zeilen hätten keinen Wert (Fehler).'],
+    dialect: 'SQLite kann Constraints nicht nachträglich ändern; andere Datenbanken kennen ALTER TABLE … ADD CONSTRAINT.',
   },
   {
     id: 'reihenfolge', title: 'Schreib- vs. Verarbeitungsreihenfolge', category: 'Grundlagen', db: 'vertrieb',

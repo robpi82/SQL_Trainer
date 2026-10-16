@@ -123,6 +123,26 @@ async function checkState(
             'Ist ein Wert fest eingetragen, statt die Bedingung allgemein zu formulieren?',
           );
         } else {
+          const missingTable = sq.label.startsWith('Struktur der Tabelle ') && (lastResult(u.after)?.rows.length ?? 0) === 0;
+          if (missingTable) {
+            return {
+              status: 'wrong',
+              messages: [`Nach deiner Anweisung gibt es keine Tabelle „${sq.label.slice('Struktur der Tabelle '.length)}“. Prüfe den Tabellennamen und ob CREATE TABLE fehlerfrei ausgeführt wurde.`],
+              notes,
+              examples: [],
+            };
+          }
+          if (sq.label.startsWith('Struktur der Tabelle ')) {
+            return {
+              status: 'wrong',
+              messages: [
+                `Die Struktur der Tabelle „${sq.label.slice('Struktur der Tabelle '.length)}“ entspricht noch nicht der Aufgabe:`,
+                ...describeStructureDiff(lastResult(s.after)!, lastResult(u.after)!),
+              ],
+              notes,
+              examples: [],
+            };
+          }
           messages.push(`Der Zustand der Tabelle stimmt nach deiner Anweisung nicht (${sq.label}).`);
           const uc = u.main.changes;
           const scount = s.main.changes;
@@ -157,5 +177,64 @@ async function checkState(
       }
     }
   }
+  // Testanweisungen: Greifen die Regeln (NOT NULL, UNIQUE, CHECK, Fremdschlüssel …) wie bei der Musterlösung?
+  if (check.probes?.length) {
+    const sqls = check.probes.map((p) => p.sql);
+    const u = await backend.probe(ex.db, userSql, sqls);
+    if (!u.main.ok) return { status: 'error', error: explainError(u.main.error, userSql, schema) };
+    const s = await backend.probe(ex.db, ex.solution, sqls);
+    const messages: string[] = [];
+    check.probes.forEach((p, i) => {
+      const ur = u.probes[i];
+      const sr = s.probes[i];
+      if (!ur || !sr) return;
+      if (!sr.ok && ur.ok) {
+        messages.push(`Test „${p.label}“: Diese Anweisung hätte die Datenbank ablehnen müssen, sie wurde aber angenommen. ${p.hint}`);
+      } else if (sr.ok && !ur.ok) {
+        messages.push(`Test „${p.label}“: Diese Anweisung sollte erlaubt sein, wurde aber abgelehnt (${ur.error}). ${p.hint}`);
+      } else if (sr.ok && ur.ok) {
+        const exp = lastResult(sr);
+        const act = lastResult(ur);
+        if (exp && (!act || !compareResultSets(exp, act, { orderMatters: false, columnNames: false }).match)) {
+          messages.push(`Test „${p.label}“: Das Ergebnis weicht ab. ${p.hint}`);
+        }
+      }
+      if (messages.length && messages[messages.length - 1].startsWith(`Test „${p.label}“`)) {
+        messages[messages.length - 1] += ` Getestet wurde: ${p.sql.replace(/\s+/g, ' ').trim()}`;
+      }
+    });
+    if (messages.length) {
+      return {
+        status: 'wrong',
+        messages: ['Die Tabellenstruktur stimmt, aber nicht alle Regeln verhalten sich wie verlangt. Dafür wurden nach deiner Anweisung Test-Datensätze eingefügt:', ...messages],
+        notes,
+        examples: [],
+      };
+    }
+  }
   return { status: 'correct', notes };
+}
+
+/** Spaltenweiser Vergleich zweier Strukturabfragen (spalte, datentyp, pflicht, primaerschluessel). */
+function describeStructureDiff(expected: ResultSet, actual: ResultSet): string[] {
+  type Col = { typ: string; pflicht: number; pk: number };
+  const toMap = (rs: ResultSet) => new Map(rs.rows.map((r) => [String(r[0]), { typ: String(r[1]), pflicht: Number(r[2]), pk: Number(r[3]) } as Col]));
+  const exp = toMap(expected);
+  const act = toMap(actual);
+  const out: string[] = [];
+  for (const [name, e] of exp) {
+    const a = act.get(name);
+    if (!a) {
+      out.push(`Die Spalte „${name}“ fehlt (oder ist anders geschrieben).`);
+      continue;
+    }
+    if (a.typ !== e.typ) out.push(`Spalte „${name}“: Erwartet wird der Datentyp „${e.typ}“, angelegt ist „${a.typ}“.`);
+    if (e.pk && !a.pk) out.push(`Spalte „${name}“ gehört zum Primärschlüssel.`);
+    if (!e.pk && a.pk) out.push(`Spalte „${name}“ soll nicht (allein) der Primärschlüssel sein.`);
+    if (!e.pk && !a.pk && e.pflicht && !a.pflicht) out.push(`Spalte „${name}“ soll ein Pflichtfeld sein (NOT NULL).`);
+    if (!e.pk && !a.pk && !e.pflicht && a.pflicht) out.push(`Spalte „${name}“ soll optional sein – ohne NOT NULL.`);
+  }
+  for (const name of act.keys()) if (!exp.has(name)) out.push(`Die Spalte „${name}“ ist in der Aufgabe nicht verlangt.`);
+  if (out.length === 0) out.push('Die Spalten stimmen, aber die Reihenfolge oder Details weichen ab.');
+  return out;
 }

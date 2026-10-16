@@ -23,11 +23,11 @@ describe('Lektionen und Nachschlagewerk', () => {
       const queries = [
         ...l.example.tables.map((t) => ({ db: l.example.db, sql: t.sql })),
         { db: l.example.db, sql: l.example.sql },
-        ...(l.extraSections ?? []).filter((s) => s.sql).map((s) => ({ db: s.db ?? l.example.db, sql: s.sql! })),
+        ...(l.extraSections ?? []).filter((s) => s.sql).map((s) => ({ db: s.db ?? l.example.db, sql: s.sql!, expectError: s.expectError })),
       ];
-      for (const { db, sql } of queries) {
+      for (const { db, sql, expectError } of queries as { db: typeof l.example.db; sql: string; expectError?: boolean }[]) {
         const r = await backend.isolated(db, sql);
-        expect(r.main.ok, `${l.id}: ${sql} ${r.main.ok ? '' : r.main.error}`).toBe(true);
+        expect(r.main.ok, `${l.id}: ${sql} ${r.main.ok ? '' : r.main.error}`).toBe(!expectError);
       }
     });
   }

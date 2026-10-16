@@ -16,7 +16,7 @@ export const MODULES: ModuleInfo[] = [
   { id: 12, title: 'Unterabfragen: skalar, IN und EXISTS', short: 'Unterabfragen', status: 'verfügbar', lessonId: 'm12' },
   { id: 13, title: 'Fallunterscheidungen mit CASE WHEN', short: 'CASE', status: 'verfügbar', lessonId: 'm13' },
   { id: 14, title: 'INSERT, UPDATE und DELETE', short: 'Daten ändern', status: 'verfügbar', lessonId: 'm14' },
-  { id: 15, title: 'CREATE TABLE, Constraints und Beziehungen', short: 'DDL', status: 'geplant' },
+  { id: 15, title: 'CREATE TABLE, Constraints und Beziehungen', short: 'Tabellen anlegen', status: 'verfügbar', lessonId: 'm15' },
   { id: 16, title: 'Gemischte Analyseaufgaben und Praxisprojekte', short: 'Praxis', status: 'geplant' },
   { id: 17, title: 'Optional: CTEs (WITH) und Window Functions', short: 'Fortgeschritten', status: 'geplant' },
 ];

@@ -25,7 +25,22 @@ export function useSchema(db: DbId): TableInfo[] | undefined {
  * Mit `dbKey` zeigt die Vorschau den aktuellen Stand der Übungsdatenbank (inkl. eigener Änderungen).
  */
 export function SchemaPanel({ db, dbKey, refreshToken }: { db: DbId; dbKey?: string; refreshToken?: number }) {
-  const schema = useSchema(db);
+  const seedSchema = useSchema(db);
+  // Mit dbKey: Schema der eigenen Übungsdatenbank (zeigt auch selbst angelegte Tabellen)
+  const [workSchema, setWorkSchema] = useState<TableInfo[]>();
+  useEffect(() => {
+    if (!dbKey) return;
+    let alive = true;
+    sqlClient()
+      .workingSchema(dbKey, db)
+      .then((s) => alive && setWorkSchema(s))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [db, dbKey, refreshToken]);
+  const schema = dbKey ? workSchema ?? seedSchema : seedSchema;
+  const seedNames = new Set(seedSchema?.map((t) => t.name));
   const [preview, setPreview] = useState<{ table: string; result?: ResultSet; error?: string } | null>(null);
   const info = DATABASES[db];
 
@@ -73,6 +88,7 @@ export function SchemaPanel({ db, dbKey, refreshToken }: { db: DbId; dbKey?: str
           <div className="schema-table-head">
             <h4>
               {t.name} <span className="muted small">({t.rowCount} Zeilen)</span>
+              {seedSchema && !seedNames.has(t.name) && <span className="badge badge-review"> selbst angelegt</span>}
             </h4>
             <button type="button" className="btn btn-small" aria-expanded={preview?.table === t.name} onClick={() => loadPreview(t.name)}>
               {preview?.table === t.name ? 'Daten ausblenden' : 'Daten anzeigen'}

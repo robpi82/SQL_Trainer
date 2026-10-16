@@ -8,7 +8,9 @@ type Req =
   | { id: number; op: 'exec'; dbKey: string; dbId: string; sql: string }
   | { id: number; op: 'reset'; dbKey: string }
   | { id: number; op: 'isolated'; dbId: string; sql: string; setup?: string; after?: string }
-  | { id: number; op: 'schema'; dbId: string };
+  | { id: number; op: 'schema'; dbId: string }
+  | { id: number; op: 'workingSchema'; dbKey: string; dbId: string }
+  | { id: number; op: 'probe'; dbId: string; sql: string; probes: string[]; setup?: string };
 
 const corePromise = initSqlJs({ locateFile: () => wasmUrl }).then((SQL) => new SqlCore(SQL));
 
@@ -34,6 +36,12 @@ self.onmessage = async (ev: MessageEvent<Req>) => {
         break;
       case 'schema':
         result = core.schema(req.dbId);
+        break;
+      case 'workingSchema':
+        result = core.workingSchema(req.dbKey, req.dbId);
+        break;
+      case 'probe':
+        result = core.probe(req.dbId, req.sql, req.probes, req.setup);
         break;
     }
     (self as unknown as Worker).postMessage({ id: req.id, ok: true, result });

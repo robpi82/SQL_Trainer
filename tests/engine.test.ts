@@ -126,6 +126,28 @@ describe('Ausführung und Prüfung mit echter SQLite-Datenbank', () => {
     if (r.status === 'error') expect(r.error.category).toBe('logic');
   });
 
+  it('Strukturprüfung nennt konkrete Abweichungen je Spalte', async () => {
+    const r = await checkExercise(backend, exerciseById.get('m15-g1')!, 'CREATE TABLE lieferanten (lieferant_id TEXT, name TEXT, ort TEXT)');
+    expect(r.status).toBe('wrong');
+    const text = r.status === 'wrong' ? r.messages.join(' ') : '';
+    expect(text).toMatch(/„lieferant_id“: Erwartet wird der Datentyp „ganze Zahl“/);
+    expect(text).toMatch(/„lieferant_id“ gehört zum Primärschlüssel/);
+    expect(text).toMatch(/„name“ soll ein Pflichtfeld sein/);
+    expect(text).toMatch(/„land“ fehlt/);
+    expect(text).toMatch(/„ort“ ist in der Aufgabe nicht verlangt/);
+  });
+
+  it('Testanweisungen decken fehlende Regeln auf', async () => {
+    const r = await checkExercise(backend, exerciseById.get('m15-e3')!, exerciseById.get('m15-e3')!.starterSql!);
+    expect(r.status).toBe('wrong');
+    if (r.status === 'wrong') expect(r.messages.join(' ')).toMatch(/0 Sterne.*ablehnen/);
+  });
+
+  it('fehlende Tabelle wird klar benannt', async () => {
+    const r = await checkExercise(backend, exerciseById.get('m15-g1')!, 'CREATE TABLE lieferant (lieferant_id INTEGER PRIMARY KEY, name TEXT NOT NULL, land TEXT)');
+    expect(r.status === 'wrong' && r.messages[0]).toMatch(/keine Tabelle „lieferanten“/);
+  });
+
   it('Schreibaufgabe ohne WHERE wird erkannt', async () => {
     const r = await checkExercise(backend, exerciseById.get('m14-e1')!, 'UPDATE produkte SET lagerbestand = lagerbestand + 20');
     expect(r.status).toBe('wrong');

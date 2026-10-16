@@ -14,6 +14,8 @@ export interface SqlBackend {
   reset(dbKey: string): Promise<void>;
   isolated(dbId: string, sql: string, setup?: string, after?: string): Promise<{ main: ExecResult; after?: ExecResult }>;
   schema(dbId: string): Promise<TableInfo[]>;
+  workingSchema(dbKey: string, dbId: string): Promise<TableInfo[]>;
+  probe(dbId: string, sql: string, probes: string[], setup?: string): Promise<{ main: ExecResult; probes: ExecResult[] }>;
 }
 
 export const TIMEOUT_MS = 5000;
@@ -101,6 +103,12 @@ class WorkerClient implements SqlBackend {
   }
   isolated(dbId: string, sql: string, setup?: string, after?: string) {
     return this.call<{ main: ExecResult; after?: ExecResult }>({ op: 'isolated', dbId, sql, setup, after });
+  }
+  workingSchema(dbKey: string, dbId: string) {
+    return this.call<TableInfo[]>({ op: 'workingSchema', dbKey, dbId });
+  }
+  probe(dbId: string, sql: string, probes: string[], setup?: string) {
+    return this.call<{ main: ExecResult; probes: ExecResult[] }>({ op: 'probe', dbId, sql, probes, setup });
   }
   async schema(dbId: string) {
     const cached = this.schemaCache.get(dbId);
