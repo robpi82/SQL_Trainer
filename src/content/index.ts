@@ -1,9 +1,12 @@
 import { EXERCISES } from './exercises';
-import { LESSONS } from './lessons';
+import { LESSONS as PATH_LESSONS } from './lessons';
+import { COURSE_LESSONS } from './kurs/lessons';
 import { MODULES } from './modules';
 import type { Exercise, Lesson, ModuleInfo } from './types';
 
-export { EXERCISES, LESSONS, MODULES };
+/** Alle Lektionen: Lernpfad und Unterricht */
+export const LESSONS: Lesson[] = [...PATH_LESSONS, ...COURSE_LESSONS];
+export { EXERCISES, MODULES, COURSE_LESSONS };
 
 export const exerciseById = new Map(EXERCISES.map((e) => [e.id, e]));
 export const lessonById = new Map(LESSONS.map((l) => [l.id, l]));
@@ -29,6 +32,20 @@ export const TYPE_LABEL: Record<Exercise['type'], string> = {
   complete: 'Abfrage ergänzen',
   predict: 'Ergebnis vorhersagen',
   explain: 'Erklären',
+  choice: 'Wissensfrage',
 };
 
 export const DIFFICULTY_LABEL: Record<number, string> = { 1: 'leicht', 2: 'mittel', 3: 'anspruchsvoll' };
+
+/** Auswahlaufgaben (Vorhersage oder Wissensfrage) */
+export const isChoiceType = (e: Exercise) => e.type === 'predict' || e.type === 'choice';
+
+/** Beschriftung einer Lektion, z. B. „Modul 3“ oder „Unterricht Tag 2“ */
+export function lessonLabel(l: Lesson): string {
+  return l.course ? `Unterricht ${l.course.label}` : `Modul ${l.moduleId}`;
+}
+
+/** Aufgaben des Lernpfads (ohne Unterricht) */
+export const PATH_EXERCISES: Exercise[] = EXERCISES.filter((e) => !lessonById.get(e.lessonId)?.course);
+/** Aufgaben zum Unterricht */
+export const COURSE_EXERCISES: Exercise[] = EXERCISES.filter((e) => !!lessonById.get(e.lessonId)?.course);

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { DIFFICULTY_LABEL, TYPE_LABEL } from '../content';
+import { DIFFICULTY_LABEL, TYPE_LABEL, isChoiceType } from '../content';
 import type { Exercise } from '../content/types';
 import { DATABASES } from '../db/seeds';
 import { SqlAbortError, sqlClient } from '../db/sqlClient';
@@ -34,7 +34,10 @@ export function ExerciseWorkspace({ exercise: ex, mode, onNext, nextLabel = 'Nä
   const schema = useSchema(ex.db);
   const client = sqlClient();
   const dbKey = `aufgabe:${ex.id}`;
-  const readOnlySql = ex.type === 'predict';
+  const isChoice = isChoiceType(ex);
+  const readOnlySql = isChoice;
+  /** Wissensfragen ohne SQL zeigen keinen Editor */
+  const showEditor = !(ex.type === 'choice' && !ex.starterSql);
 
   const [sql, setSql] = useState(() => (readOnlySql ? ex.starterSql ?? '' : record?.draft ?? ex.starterSql ?? ''));
   const [busy, setBusy] = useState(false);
@@ -45,7 +48,7 @@ export function ExerciseWorkspace({ exercise: ex, mode, onNext, nextLabel = 'Nä
   const [successInfo, setSuccessInfo] = useState<TaskStatus | null>(null);
   // Heute bereits genutzte Hilfen bleiben sichtbar (sie zählen ohnehin schon).
   const [hintsShown, setHintsShown] = useState(() => (record?.hintDay === dayString() ? record.hintLevel : 0));
-  const [solutionShown, setSolutionShown] = useState(() => record?.solutionDay === dayString() && ex.type !== 'predict');
+  const [solutionShown, setSolutionShown] = useState(() => record?.solutionDay === dayString() && !isChoice);
   const [askSolution, setAskSolution] = useState(false);
   const [askReset, setAskReset] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -252,14 +255,14 @@ export function ExerciseWorkspace({ exercise: ex, mode, onNext, nextLabel = 'Nä
               )}
               {!solutionShown && (
                 <button type="button" className="btn btn-ghost" onClick={() => setAskSolution(true)}>
-                  Musterlösung anzeigen …
+                  {ex.type === 'choice' ? 'Lösung anzeigen …' : 'Musterlösung anzeigen …'}
                 </button>
               )}
             </div>
             {solutionShown && (
               <div className="solution">
-                <h4>Musterlösung</h4>
-                <pre className="code-block">{ex.solution}</pre>
+                <h4>{ex.type === 'choice' ? 'Lösung' : 'Musterlösung'}</h4>
+                {ex.type !== 'choice' && <pre className="code-block">{ex.solution}</pre>}
                 <Markup text={ex.solutionExplanation} />
                 {isQueryTask && <p className="small muted">Andere Lösungswege sind ebenso richtig, wenn sie dasselbe Ergebnis liefern.</p>}
               </div>
@@ -277,6 +280,7 @@ export function ExerciseWorkspace({ exercise: ex, mode, onNext, nextLabel = 'Nä
 
       {/* ---------- rechte Spalte: Editor, Ergebnis, Feedback ---------- */}
       <section className="ws-right" aria-label="Editor und Ergebnis">
+        {showEditor && (
         <div className="card ws-editor">
           <div className="editor-head">
             <h3>{readOnlySql ? 'Abfrage' : ex.type === 'explain' ? 'Abfrage zum Ausprobieren' : 'Deine Abfrage'}</h3>
@@ -327,12 +331,19 @@ export function ExerciseWorkspace({ exercise: ex, mode, onNext, nextLabel = 'Nä
             </p>
           )}
         </div>
+        )}
+        {!showEditor && notice && (
+          <p className="notice" role="status">
+            {notice}
+          </p>
+        )}
 
         {/* Vorhersage */}
-        {ex.type === 'predict' && ex.choices && (
+        {isChoice && ex.choices && (
+          <div className={showEditor ? undefined : 'ws-editor'}>
           <div className="card">
             <fieldset className="choices" disabled={answered}>
-              <legend>Deine Vorhersage</legend>
+              <legend>{ex.type === 'choice' ? 'Deine Antwort' : 'Deine Vorhersage'}</legend>
               {ex.choices.options.map((o, i) => (
                 <label key={i} className={answered ? (i === ex.choices!.correct ? 'choice correct' : i === choice ? 'choice wrong' : 'choice') : 'choice'}>
                   <input type="radio" name={`choice-${ex.id}`} checked={choice === i} onChange={() => setChoice(i)} /> {o}
@@ -348,9 +359,10 @@ export function ExerciseWorkspace({ exercise: ex, mode, onNext, nextLabel = 'Nä
                 <p>
                   <strong>{choice === ex.choices.correct ? 'Richtig!' : 'Leider nicht richtig.'}</strong> {inline(ex.choices.explanation)}
                 </p>
-                <p className="small">Führe die Abfrage mit „Ausführen“ aus, um das tatsächliche Ergebnis zu sehen.</p>
+                {showEditor && <p className="small">Führe die Abfrage mit „Ausführen“ aus, um das tatsächliche Ergebnis zu sehen.</p>}
               </div>
             )}
+          </div>
           </div>
         )}
 
@@ -422,9 +434,9 @@ export function ExerciseWorkspace({ exercise: ex, mode, onNext, nextLabel = 'Nä
             <NotesBox notes={check.notes} />
           </div>
         )}
-        {successInfo && ex.type === 'predict' && answered && <p className="small muted">{successText(successInfo)}</p>}
+        {successInfo && isChoice && answered && <p className="small muted">{successText(successInfo)}</p>}
 
-        {(check?.status === 'correct' || (answered && ex.type === 'predict') || assessed) && onNext && (
+        {(check?.status === 'correct' || (answered && isChoice) || assessed) && onNext && (
           <div className="next-row">
             <button type="button" className="btn btn-primary" onClick={onNext}>
               {nextLabel} →

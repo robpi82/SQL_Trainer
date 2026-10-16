@@ -3,6 +3,7 @@ import { href, useRoute } from './lib/router';
 import { DarkContext, useTheme, type ThemeSetting } from './lib/theme';
 import { DashboardPage } from './pages/DashboardPage';
 import { PathPage } from './pages/PathPage';
+import { CoursePage } from './pages/CoursePage';
 import { LessonPage } from './pages/LessonPage';
 import { ExercisePage } from './pages/ExercisePage';
 import { PracticePage } from './pages/PracticePage';
@@ -12,11 +13,13 @@ import { SandboxPage } from './pages/SandboxPage';
 import { ReferencePage } from './pages/ReferencePage';
 import { ProgressPage } from './pages/ProgressPage';
 import { useProgress } from './progress/ProgressContext';
+import { exerciseById, lessonById } from './content';
 import { dueReviews } from './progress/stats';
 
 const NAV = [
   { to: '/', label: 'Übersicht', match: [''] },
   { to: '/lernpfad', label: 'Lernpfad', match: ['lernpfad', 'lektion'] },
+  { to: '/unterricht', label: 'Unterricht', match: ['unterricht'] },
   { to: '/ueben', label: 'Freies Üben', match: ['ueben'] },
   { to: '/wiederholen', label: 'Wiederholen', match: ['wiederholen'] },
   { to: '/test', label: 'Wissenstest', match: ['test'] },
@@ -48,6 +51,9 @@ export function App() {
       break;
     case 'lernpfad':
       page = <PathPage />;
+      break;
+    case 'unterricht':
+      page = <CoursePage />;
       break;
     case 'lektion':
       page = <LessonPage lessonId={route.parts[1]} section={route.query.get('abschnitt')} />;
@@ -85,7 +91,19 @@ export function App() {
   }
 
   const modus = route.query.get('modus');
-  const activeNav = first === 'aufgabe' ? (modus === 'frei' ? 'ueben' : modus === 'wiederholung' ? 'wiederholen' : 'lernpfad') : first;
+  // Unterrichtslektionen und -aufgaben gehören zum Navigationspunkt „Unterricht“
+  const routeLesson =
+    first === 'lektion' ? lessonById.get(route.parts[1] ?? '') : first === 'aufgabe' ? lessonById.get(exerciseById.get(route.parts[1] ?? '')?.lessonId ?? '') : undefined;
+  const activeNav =
+    first === 'aufgabe' && modus === 'frei'
+      ? 'ueben'
+      : first === 'aufgabe' && modus === 'wiederholung'
+        ? 'wiederholen'
+        : routeLesson?.course
+          ? 'unterricht'
+          : first === 'aufgabe'
+            ? 'lernpfad'
+            : first;
 
   return (
     <DarkContext.Provider value={dark}>

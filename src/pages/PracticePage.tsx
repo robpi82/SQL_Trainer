@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DIFFICULTY_LABEL, EXERCISES, MODULES, TYPE_LABEL, lessonById } from '../content';
+import { COURSE_LESSONS, DIFFICULTY_LABEL, EXERCISES, MODULES, TYPE_LABEL, lessonById, lessonLabel } from '../content';
 import type { ExerciseType } from '../content/types';
 import { StatusBadge } from '../components/StatusBadge';
 import { DATABASES, DB_IDS } from '../db/seeds';
@@ -38,11 +38,20 @@ export function PracticePage() {
           Modul
           <select value={mod} onChange={(e) => setMod(e.target.value)}>
             <option value="alle">Alle Module</option>
-            {MODULES.filter((m) => m.status === 'verfügbar').map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.id}. {m.short}
-              </option>
-            ))}
+            <optgroup label="Lernpfad">
+              {MODULES.filter((m) => m.status === 'verfügbar').map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.id}. {m.short}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Unterricht">
+              {COURSE_LESSONS.map((l) => (
+                <option key={l.id} value={l.moduleId}>
+                  {l.course!.label}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </label>
         <label>
@@ -107,7 +116,7 @@ export function PracticePage() {
           <thead>
             <tr>
               <th scope="col">Aufgabe</th>
-              <th scope="col">Modul</th>
+              <th scope="col">Lektion</th>
               <th scope="col">Typ</th>
               <th scope="col">Schwierigkeit</th>
               <th scope="col">Status</th>
@@ -120,7 +129,7 @@ export function PracticePage() {
                   <Link to={`/aufgabe/${e.id}?modus=frei`}>{e.title}</Link>
                   <div className="small muted">{e.concepts.join(' · ')}</div>
                 </td>
-                <td>{lessonById.get(e.lessonId)!.moduleId}</td>
+                <td>{lessonLabel(lessonById.get(e.lessonId)!)}</td>
                 <td>{TYPE_LABEL[e.type]}</td>
                 <td>
                   <span className={`badge diff-${e.difficulty}`}>{DIFFICULTY_LABEL[e.difficulty]}</span>

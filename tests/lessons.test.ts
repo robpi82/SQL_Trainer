@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { LESSONS, MODULES, EXERCISES, exercisesOfLesson } from '../src/content';
+import { COURSE_LESSONS, LESSONS, MODULES, EXERCISES, exercisesOfLesson } from '../src/content';
 import { REFERENCE } from '../src/content/reference';
 import { createNodeBackend } from './nodeBackend';
 
@@ -14,8 +14,15 @@ describe('Lektionen und Nachschlagewerk', () => {
       expect(ex.filter((e) => !e.guided).length, m.lessonId).toBeGreaterThanOrEqual(3);
     }
   });
+  it('jede Unterrichtslektion hat eine angeleitete Übung und mehrere Aufgaben', () => {
+    for (const l of COURSE_LESSONS) {
+      const ex = exercisesOfLesson(l.id);
+      expect(ex.filter((e) => e.guided).length, l.id).toBe(1);
+      expect(ex.filter((e) => !e.guided).length, l.id).toBeGreaterThanOrEqual(5);
+    }
+  });
   it('mindestens 30 Aufgaben bis einschließlich Unterabfragen', () => {
-    const basic = EXERCISES.filter((e) => Number(e.lessonId.slice(1)) <= 12);
+    const basic = EXERCISES.filter((e) => e.lessonId.startsWith('m') && Number(e.lessonId.slice(1)) <= 12);
     expect(basic.length).toBeGreaterThanOrEqual(30);
   });
   for (const l of LESSONS) {

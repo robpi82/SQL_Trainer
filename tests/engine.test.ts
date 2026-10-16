@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { compareResultSets } from '../src/engine/compare';
 import { explainError, lintSql } from '../src/engine/errors';
 import { exerciseById } from '../src/content';
-import { checkExercise } from '../src/engine/check';
+import { checkExercise, hasPlaceholders } from '../src/engine/check';
 import { createNodeBackend } from './nodeBackend';
 
 const rs = (columns: string[], rows: (string | number | null)[][]) => ({ columns, rows });
@@ -54,6 +54,14 @@ describe('Ergebnisvergleich', () => {
     const r = compareResultSets(rs(['n', 'p'], [['A', 1], ['B', 2]]), rs(['n', 'p'], [['A', 1], ['B', 3]]));
     expect(r.messages.join(' ')).toMatch(/„p“/);
     expect(r.examples.length).toBe(2);
+  });
+});
+
+describe('Lückenerkennung', () => {
+  it('erkennt ___ im Code, aber nicht in Textliteralen', () => {
+    expect(hasPlaceholders('SELECT ___ FROM t')).toBe(true);
+    expect(hasPlaceholders("CHECK (d LIKE '____-__-__')")).toBe(false);
+    expect(hasPlaceholders("CHECK (d LIKE '____-__-__') AND ___")).toBe(true);
   });
 });
 

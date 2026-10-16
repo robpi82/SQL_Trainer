@@ -13,6 +13,7 @@ const DEFAULT_SQL: Record<DbId, string> = {
   vertrieb: '-- Probiere frei aus! Strg+Enter führt aus.\nSELECT * FROM kunden;',
   forschung: '-- Probiere frei aus! Strg+Enter führt aus.\nSELECT * FROM inseln;',
   support: '-- Probiere frei aus! Strg+Enter führt aus.\nSELECT * FROM tickets;',
+  lieferdb: '-- Probiere frei aus! Strg+Enter führt aus.\nSELECT * FROM lieferungen;',
 };
 
 export function SandboxPage({ initialDb, initialSql }: { initialDb: string | null; initialSql: string | null }) {

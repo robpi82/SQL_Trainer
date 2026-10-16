@@ -244,6 +244,37 @@ export function explainError(message: string, sql: string, schema?: TableInfo[])
     return { category: 'constraint', title: CATEGORY_LABEL.constraint, explanation: [text[kind]], original };
   }
 
+  if ((m = message.match(/cannot store (\w+) value in (\w+) column (\S+)/i))) {
+    return {
+      category: 'constraint',
+      title: 'Falscher Datentyp (STRICT)',
+      explanation: [`Die Tabelle ist STRICT: In die ${m[2]}-Spalte ${m[3]} darf kein ${m[1]}-Wert. Ohne STRICT hätte SQLite den Wert einfach gespeichert.`],
+      original,
+    };
+  }
+
+  if ((m = message.match(/unknown datatype for (\S+): "?([^"]+)"?/i))) {
+    return {
+      category: 'logic',
+      title: 'Datentyp in STRICT-Tabelle nicht erlaubt',
+      explanation: [`In STRICT-Tabellen sind nur INTEGER, REAL, TEXT, BLOB und ANY erlaubt – „${m[2]}“ (Spalte ${m[1]}) nicht. Typen wie VARCHAR(50) oder DECIMAL(8,2) kennt SQLite nur in normalen Tabellen.`],
+      original,
+    };
+  }
+
+  if (/cannot (start|commit|rollback)[^:]*transaction|no transaction is active/i.test(message)) {
+    return {
+      category: 'logic',
+      title: 'Transaktion',
+      explanation: ['Es ist keine Transaktion offen bzw. schon eine geöffnet. COMMIT und ROLLBACK brauchen ein vorheriges BEGIN; ein zweites BEGIN ist erst nach COMMIT oder ROLLBACK möglich. Tipp: „Datenbank zurücksetzen“ beendet offene Transaktionen.'],
+      original,
+    };
+  }
+
+  if (/no such savepoint/i.test(message)) {
+    return { category: 'logic', title: 'Unbekannter SAVEPOINT', explanation: ['ROLLBACK TO und RELEASE brauchen den Namen einer Marke, die vorher mit SAVEPOINT gesetzt wurde.'], original };
+  }
+
   if (/datatype mismatch/i.test(message)) {
     return {
       category: 'constraint',
@@ -298,7 +329,7 @@ export function explainError(message: string, sql: string, schema?: TableInfo[])
     else if (/^[A-ZÄÖÜa-zäöü_]+$/.test(tok))
       expl.push('Ist ein Schlüsselwort falsch geschrieben (z. B. SELCT, FORM, WHRE) – oder fehlt ein Komma zwischen zwei Spalten?');
     if (/=\s*NULL/i.test(sql)) expl.push('Hinweis: Vergleiche mit NULL schreibt man als IS NULL bzw. IS NOT NULL.');
-    if (sql.includes('___')) expl.push('Im Code stehen noch Lücken „___“, die ersetzt werden müssen.');
+    if (sql.replace(/'(?:[^']|'')*'/g, "''").includes('___')) expl.push('Im Code stehen noch Lücken „___“, die ersetzt werden müssen.');
     return { category: 'syntax', title: CATEGORY_LABEL.syntax, explanation: expl, original };
   }
 

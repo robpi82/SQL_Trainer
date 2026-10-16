@@ -16,6 +16,14 @@ describe('Aufgabeninhalte', () => {
   });
 
   for (const ex of EXERCISES) {
+    if (ex.type === 'choice') {
+      it(`${ex.id}: Wissensfrage ist vollständig`, async () => {
+        expect(ex.choices, ex.id).toBeTruthy();
+        expect(ex.choices!.correct).toBeLessThan(ex.choices!.options.length);
+        if (ex.starterSql) expect((await backend.isolated(ex.db, ex.starterSql)).main.ok, ex.id).toBe(true);
+      });
+      continue;
+    }
     if (ex.type === 'predict' || ex.type === 'explain') {
       it(`${ex.id}: gezeigte Abfrage ist ausführbar`, async () => {
         const r = await backend.isolated(ex.db, ex.starterSql ?? ex.solution);

@@ -12,6 +12,11 @@ export type CheckOutcome =
 
 const lastResult = (r: ExecResult & { ok: true }): ResultSet | undefined => r.results[r.results.length - 1];
 
+/** Lücken „___“ im Startcode erkennen – aber nicht in Textliteralen wie LIKE '____-__-__'. */
+export function hasPlaceholders(sql: string): boolean {
+  return sql.replace(/'(?:[^']|'')*'/g, "''").includes('___');
+}
+
 /** Entfernt Kommentare und Leerraum, um leere Eingaben zu erkennen. */
 export function isBlankSql(sql: string): boolean {
   return sql.replace(/--.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').trim().replace(/;/g, '').trim() === '';
@@ -24,7 +29,7 @@ export async function checkExercise(
   schema?: TableInfo[],
 ): Promise<CheckOutcome> {
   if (isBlankSql(userSql)) return { status: 'empty' };
-  if (userSql.includes('___')) {
+  if (hasPlaceholders(userSql)) {
     return {
       status: 'wrong',
       messages: ['Im Code stehen noch Lücken „___“. Ersetze sie durch passenden SQL-Code.'],
@@ -142,6 +147,9 @@ async function checkState(
               notes,
               examples: [],
             };
+          }
+          if (sq.hint) {
+            return { status: 'wrong', messages: [`Prüfung „${sq.label}“ nicht erfüllt.`, sq.hint], notes, examples: [] };
           }
           messages.push(`Der Zustand der Tabelle stimmt nach deiner Anweisung nicht (${sq.label}).`);
           const uc = u.main.changes;

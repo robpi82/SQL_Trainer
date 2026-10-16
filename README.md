@@ -12,7 +12,8 @@ Eine deutschsprachige Lern-App für SQL. Du schreibst echte Abfragen, sie werden
 |---|---|
 | Lernpfad | Module 1–16 vollständig ausgearbeitet (Lernziel → Erklärung → Beispiel → Schritt für Schritt → angeleitete Übung → Aufgaben → Zusammenfassung) |
 | Aufgaben | **117 Aufgaben** (82 davon in den Modulen 1–12: Grundlagen bis JOIN und Unterabfragen, 9 zu CASE WHEN, 6 zu INSERT/UPDATE/DELETE, 9 zu CREATE TABLE, 11 Praxis- und Analyseaufgaben), leicht/mittel/anspruchsvoll |
-| Aufgabentypen | Abfrage schreiben, Fehler korrigieren, Abfrage ergänzen, Ergebnis vorhersagen, Erklären (Selbsteinschätzung mit Musterantwort) |
+| Unterricht | Eigener Bereich mit Lektionen und 42 Übungen zu den Kurstagen 2–4 (ERM, Tabellen bauen, Daten ändern & Transaktionen) auf der Lieferdatenbank des E.I.S. |
+| Aufgabentypen | Abfrage schreiben, Fehler korrigieren, Abfrage ergänzen, Ergebnis vorhersagen, Erklären (Selbsteinschätzung mit Musterantwort), Wissensfrage (Auswahl) |
 | Prüfung | Ergebnisvergleich mit Duplikaten, optionaler Reihenfolge- und Spaltennamenprüfung, zusätzlichen Testdaten, Zustandsprüfung für INSERT/UPDATE/DELETE |
 | Hilfen | 3 Stufen (Denkanstoß → Schlüsselwörter → Gerüst), Musterlösung erst nach Bestätigung |
 | Fehler | Syntaxfehler, unbekannte Tabelle/Spalte, logische Fehler und Constraint-Verletzungen werden unterschieden – mit Originalmeldung und Erklärung |
@@ -150,6 +151,22 @@ Der Test führt jede Musterlösung aus, prüft, dass sie akzeptiert wird, dass S
 **Neue Lektion / neues Modul:** Lektion in `lessons.ts` ergänzen, in `modules.ts` beim Modul `status: 'verfügbar'` und `lessonId` setzen, Aufgaben mit dieser `lessonId` anlegen (genau eine mit `guided: true` für die angeleitete Übung).
 
 ---
+
+## Bereich „Unterricht“
+
+Begleitend zum Kurs (E.I.S. · Dezernat 512) gibt es je Kurstag eine Lektion mit eigenen, parallelen Übungen:
+
+| Kurstag | Lektion | Grundlage |
+|---|---|---|
+| Tag 2 | Datenmodellierung mit dem ERM (mit ERM-Grafik der Lieferdatenbank) | Einsatz 512-002 |
+| Tag 3 | Tabellen bauen: STRICT, Constraints, Indizes, IHK-Prüfungsecke | Pinguin-Labor Tag 3, Einsatz 512-003 |
+| Tag 4 | Daten ändern, ON DELETE, Transaktionen, ACID, Abgleich mit COALESCE | Pinguin-Labor Tag 4, Einsatz 512-004 |
+
+Die Übungen laufen auf der Datenbank **Lieferdatenbank (E.I.S.)** im Stand nach Einsatz 512-003. Ein neuer Kurstag wird so ergänzt:
+
+1. Lektion in `src/content/kurs/lessons.ts` anlegen (`moduleId: 100 + Tag`, Feld `course` mit Tag, Beschriftung und Quellen).
+2. Aufgaben in einer neuen Datei `src/content/kurs/tagN.ts` (genau eine mit `guided: true`) und in `src/content/kurs/exercises.ts` eintragen.
+3. `npm test` ausführen.
 
 ## Wie die Prüfung funktioniert
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DIFFICULTY_LABEL, EXERCISES, MODULES, TYPE_LABEL, lessonById } from '../content';
+import { COURSE_LESSONS, DIFFICULTY_LABEL, EXERCISES, MODULES, TYPE_LABEL, isChoiceType, lessonById } from '../content';
 import type { Exercise } from '../content/types';
 import { ErrorBox, WrongBox } from '../components/Feedback';
 import { Markup, inline } from '../components/Markup';
@@ -27,7 +27,11 @@ function shuffle<T>(arr: T[]): T[] {
 
 export function TestPage() {
   const { state, dispatch } = useProgress();
-  const available = MODULES.filter((m) => m.status === 'verfügbar');
+  // Lernpfad-Module und Unterrichtstage (moduleId 100 + Tag) gemeinsam auswählbar
+  const available = [
+    ...MODULES.filter((m) => m.status === 'verfügbar').map((m) => ({ id: m.id, title: `${m.id}. ${m.title}` })),
+    ...COURSE_LESSONS.map((l) => ({ id: l.moduleId, title: `Unterricht ${l.course!.label}: ${l.title}` })),
+  ];
   const [mods, setMods] = useState<number[]>(() => available.map((m) => m.id));
   const [count, setCount] = useState(8);
   const [withPredict, setWithPredict] = useState(true);
@@ -43,7 +47,7 @@ export function TestPage() {
     (e) =>
       mods.includes(lessonById.get(e.lessonId)!.moduleId) &&
       e.type !== 'explain' &&
-      (withPredict || e.type !== 'predict'),
+      (withPredict || !isChoiceType(e)),
   );
 
   const start = () => {
@@ -52,7 +56,7 @@ export function TestPage() {
     const weighted = shuffle(pool).sort((a, b) => hadErrors(b) - hadErrors(a));
     const qs = shuffle(weighted.slice(0, Math.min(count, pool.length)));
     setQuestions(qs);
-    setAnswers(Object.fromEntries(qs.map((q) => [q.id, q.type === 'predict' ? {} : { sql: q.starterSql ?? '' }])));
+    setAnswers(Object.fromEntries(qs.map((q) => [q.id, isChoiceType(q) ? {} : { sql: q.starterSql ?? '' }])));
     setIdx(0);
     setResults({});
     setRevealed({});
@@ -61,7 +65,7 @@ export function TestPage() {
 
   const answeredCount = questions.filter((q) => {
     const a = answers[q.id];
-    return q.type === 'predict' ? a?.choice !== undefined : !!a?.sql?.trim() && a.sql !== q.starterSql;
+    return isChoiceType(q) ? a?.choice !== undefined : !!a?.sql?.trim() && a.sql !== q.starterSql;
   }).length;
 
   const finish = async () => {
@@ -73,7 +77,7 @@ export function TestPage() {
       const a = answers[q.id] ?? {};
       let correct = false;
       let outcome: CheckOutcome | undefined;
-      if (q.type === 'predict') correct = a.choice === q.choices?.correct;
+      if (isChoiceType(q)) correct = a.choice === q.choices?.correct;
       else {
         try {
           outcome = await checkExercise(sqlClient(), q, a.sql ?? '');
@@ -121,7 +125,7 @@ export function TestPage() {
                   checked={mods.includes(m.id)}
                   onChange={(e) => setMods(e.target.checked ? [...mods, m.id] : mods.filter((x) => x !== m.id))}
                 />{' '}
-                {m.id}. {m.title}
+                {m.title}
               </label>
             ))}
           </fieldset>
@@ -136,7 +140,7 @@ export function TestPage() {
             </select>
           </label>
           <label className="check">
-            <input type="checkbox" checked={withPredict} onChange={(e) => setWithPredict(e.target.checked)} /> Vorhersage-Aufgaben (Auswahl) einbeziehen
+            <input type="checkbox" checked={withPredict} onChange={(e) => setWithPredict(e.target.checked)} /> Auswahlaufgaben (Vorhersagen und Wissensfragen) einbeziehen
           </label>
           <p className="small muted">{pool.length} passende Aufgaben im Pool.</p>
           <button type="button" className="btn btn-primary" disabled={pool.length === 0} onClick={start}>
@@ -186,7 +190,7 @@ export function TestPage() {
                 {i + 1}. {q.title} <span className={r?.correct ? 'tag-ok' : 'tag-bad'}>{r?.correct ? '✓ richtig' : '✗ nicht richtig'}</span>
               </h2>
               <Markup text={q.prompt} className="small" />
-              {q.type === 'predict' ? (
+              {isChoiceType(q) ? (
                 <p>
                   Deine Antwort: <strong>{a.choice !== undefined ? q.choices!.options[a.choice] : '– keine –'}</strong>
                   {!r?.correct && <><br />{inline(q.choices!.explanation)}</>}
@@ -200,7 +204,7 @@ export function TestPage() {
                   {r?.outcome?.status === 'empty' && <p className="muted">Keine Abfrage eingegeben.</p>}
                 </>
               )}
-              {!r?.correct && q.type !== 'predict' && (
+              {!r?.correct && !isChoiceType(q) && (
                 revealed[q.id] ? (
                   <div className="solution">
                     <h4>Musterlösung</h4>
@@ -227,7 +231,7 @@ export function TestPage() {
       <nav className="test-nav" aria-label="Fragen">
         {questions.map((qq, i) => {
           const a = answers[qq.id];
-          const done = qq.type === 'predict' ? a?.choice !== undefined : !!a?.sql?.trim() && a.sql !== qq.starterSql;
+          const done = isChoiceType(qq) ? a?.choice !== undefined : !!a?.sql?.trim() && a.sql !== qq.starterSql;
           return (
             <button key={qq.id} type="button" className={`dot ${i === idx ? 'current' : ''} ${done ? 'done' : ''}`} aria-current={i === idx} aria-label={`Frage ${i + 1}${done ? ', bearbeitet' : ''}`} onClick={() => setIdx(i)}>
               {i + 1}
@@ -269,7 +273,9 @@ function TestQuestion({ q, answer, onAnswer }: { q: Exercise; answer: Answer; on
   const [err, setErr] = useState<ExplainedError | null>(null);
   const [busy, setBusy] = useState(false);
   const dbKey = `test:${q.id}`;
-  const sql = q.type === 'predict' ? q.starterSql ?? '' : answer.sql ?? '';
+  const choiceQ = isChoiceType(q);
+  const showEditor = !(q.type === 'choice' && !q.starterSql);
+  const sql = choiceQ ? q.starterSql ?? '' : answer.sql ?? '';
 
   const doRun = async () => {
     if (busy || !sql.trim()) return;
@@ -320,15 +326,16 @@ function TestQuestion({ q, answer, onAnswer }: { q: Exercise; answer: Answer; on
         </details>
       </section>
       <section className="ws-right">
+        {showEditor && (
         <div className="card ws-editor">
           <SqlEditor
             value={sql}
-            onChange={q.type === 'predict' ? undefined : (v) => onAnswer({ sql: v })}
+            onChange={choiceQ ? undefined : (v) => onAnswer({ sql: v })}
             onRun={doRun}
-            readOnly={q.type === 'predict'}
+            readOnly={choiceQ}
             schema={schema}
             label="SQL-Editor (Test)"
-            minHeight={q.type === 'predict' ? '60px' : '150px'}
+            minHeight={choiceQ ? '60px' : '150px'}
           />
           <div className="toolbar">
             <button type="button" className="btn" onClick={doRun} disabled={busy}>
@@ -340,14 +347,15 @@ function TestQuestion({ q, answer, onAnswer }: { q: Exercise; answer: Answer; on
               </button>
             )}
             <span className="toolbar-spacer" />
-            {q.type !== 'predict' && (
+            {!choiceQ && (
               <button type="button" className="btn btn-ghost" onClick={() => onAnswer({ sql: q.starterSql ?? '' })}>
                 Zurücksetzen
               </button>
             )}
           </div>
         </div>
-        {q.type === 'predict' && q.choices && (
+        )}
+        {choiceQ && q.choices && (
           <fieldset className="card choices">
             <legend>Deine Vorhersage</legend>
             {q.choices.options.map((o, i) => (

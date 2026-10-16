@@ -7,8 +7,9 @@ import type { DbId } from '../db/seeds';
  * - complete: unvollständige Abfrage ergänzen (Startcode mit Lücken ___)
  * - predict:  Ergebnis einer Abfrage vorhersagen (Auswahl), danach ausführen
  * - explain:  in eigenen Worten erklären; Abgleich mit Musterantwort zur Selbsteinschätzung
+ * - choice:   Wissensfrage mit Auswahl (ergänzend, z. B. zu ERM oder ACID); starterSql optional
  */
-export type ExerciseType = 'write' | 'fix' | 'complete' | 'predict' | 'explain';
+export type ExerciseType = 'write' | 'fix' | 'complete' | 'predict' | 'explain' | 'choice';
 export type Difficulty = 1 | 2 | 3;
 
 export interface QueryCheck {
@@ -27,7 +28,8 @@ export interface QueryCheck {
 export interface StateCheck {
   kind: 'state';
   /** Abfrage(n), mit denen der entstandene Datenbankzustand verglichen wird (mit ORDER BY!). */
-  stateQueries: { label: string; sql: string }[];
+  /** hint: eigene Rückmeldung bei Abweichung (statt des allgemeinen Zeilenvergleichs) */
+  stateQueries: { label: string; sql: string; hint?: string }[];
   variants?: { description: string; setup: string }[];
   /**
    * Testanweisungen, die nach der Lösung einzeln ausgeführt werden (z. B. INSERTs, die eine Regel verletzen).
@@ -57,7 +59,7 @@ export interface Exercise {
   /** Erwartete Spalten – nur zur Anzeige in der Aufgabe. */
   expectedColumns?: string[];
   check?: QueryCheck | StateCheck;
-  /** Für predict: Antwortmöglichkeiten */
+  /** Für predict und choice: Antwortmöglichkeiten */
   choices?: { options: string[]; correct: number; explanation: string };
   /** Für explain: Musterantwort zur Selbsteinschätzung */
   modelAnswer?: string;
@@ -85,7 +87,12 @@ export interface LessonExample {
 
 export interface Lesson {
   id: string;
+  /** Modulnummer im Lernpfad; Unterrichtslektionen verwenden 100 + Kurstag. */
   moduleId: number;
+  /** Gesetzt bei Lektionen zum eigenen Unterricht (Bereich „Unterricht“). */
+  course?: { day: number; label: string; sources: string[] };
+  /** Optionale Grafik, die nach der Erklärung angezeigt wird. */
+  diagram?: 'lieferdb-erm';
   title: string;
   goals: string[];
   /** Erklärung als Absätze (Mini-Markup) */

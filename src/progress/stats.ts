@@ -1,4 +1,4 @@
-import { EXERCISES, MODULES, ORDERED_LESSONS, exercisesOfLesson, lessonById } from '../content';
+import { COURSE_LESSONS, EXERCISES, MODULES, ORDERED_LESSONS, PATH_EXERCISES, exercisesOfLesson, lessonById } from '../content';
 import type { Exercise } from '../content/types';
 import { STATUS_POINTS, dayString, isDue, statusOf, type ProgressState, type TaskStatus } from './model';
 
@@ -37,8 +37,13 @@ export function moduleProgress(state: ProgressState): ModuleProgress[] {
   }));
 }
 
+/** Gesamtfortschritt im Lernpfad (Unterrichtsaufgaben werden separat ausgewiesen) */
 export function overallProgress(state: ProgressState) {
-  return progressOf(state, EXERCISES);
+  return progressOf(state, PATH_EXERCISES);
+}
+
+export function courseProgress(state: ProgressState) {
+  return COURSE_LESSONS.map((l) => ({ lesson: l, ...progressOf(state, exercisesOfLesson(l.id)) }));
 }
 
 export interface ConceptStat {

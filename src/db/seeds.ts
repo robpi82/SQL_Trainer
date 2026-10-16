@@ -6,7 +6,7 @@
  * unsaubere Texte und fehlende Zuordnungen – genau die Stolperfallen aus der Praxis.
  */
 
-export type DbId = 'vertrieb' | 'forschung' | 'support';
+export type DbId = 'vertrieb' | 'forschung' | 'support' | 'lieferdb';
 
 type Val = string | number | null;
 
@@ -479,6 +479,104 @@ const supportData = [
   ),
 ].join('\n');
 
+/* ------------------------------------------------------------------ */
+/* D. Lieferdatenbank des E.I.S. (Unterricht, Einsatz 512-003/-004)     */
+/* Stand nach Einsatz 512-003: Lieferung 5 (MS FIG 512) ohne Positionen */
+/* ------------------------------------------------------------------ */
+
+const lieferdbSchema = `
+CREATE TABLE schiffe (
+  schiff_id INTEGER PRIMARY KEY,
+  name      TEXT    NOT NULL UNIQUE,
+  flagge    TEXT    NOT NULL CHECK (length(flagge) = 2),
+  kapitaen  TEXT
+) STRICT;
+
+CREATE TABLE stationen (
+  station_id INTEGER PRIMARY KEY,
+  name       TEXT    NOT NULL UNIQUE,
+  region     TEXT    NOT NULL
+) STRICT;
+
+CREATE TABLE waren (
+  ware_id     INTEGER PRIMARY KEY,
+  bezeichnung TEXT    NOT NULL UNIQUE,
+  einheit     TEXT    NOT NULL DEFAULT 'kg'
+                      CHECK (einheit IN ('kg', 'Liter', 'Stück'))
+) STRICT;
+
+CREATE TABLE lieferungen (
+  lieferung_id INTEGER PRIMARY KEY,
+  ankunft      TEXT    NOT NULL CHECK (ankunft LIKE '____-__-__'),
+  schiff_id    INTEGER NOT NULL REFERENCES schiffe(schiff_id),
+  station_id   INTEGER NOT NULL REFERENCES stationen(station_id)
+) STRICT;
+
+CREATE TABLE positionen (
+  lieferung_id INTEGER NOT NULL REFERENCES lieferungen(lieferung_id),
+  ware_id      INTEGER NOT NULL REFERENCES waren(ware_id),
+  menge_kisten INTEGER NOT NULL CHECK (menge_kisten > 0),
+  PRIMARY KEY (lieferung_id, ware_id)
+) STRICT;
+
+CREATE INDEX idx_positionen_ware ON positionen(ware_id);
+`;
+
+const lieferdbData = [
+  insert(
+    'schiffe',
+    ['schiff_id', 'name', 'flagge', 'kapitaen'],
+    [
+      [1, 'MS Albatros', 'DE', 'Imke Harms'],
+      [2, 'MS Estrella Austral', 'CL', 'Ana Riquelme'],
+      [3, 'MS FIG 512', 'NO', 'Oddvar Hvalross'],
+    ],
+  ),
+  insert(
+    'stationen',
+    ['station_id', 'name', 'region'],
+    [
+      [1, 'Station CBW', 'Palmer-Archipel'],
+      [2, 'Station Eisvogel', 'Weddellmeer'],
+      [3, 'Station Sturmvogel', 'Rossmeer'],
+    ],
+  ),
+  insert(
+    'waren',
+    ['ware_id', 'bezeichnung', 'einheit'],
+    [
+      [1, 'Diesel', 'Liter'],
+      [2, 'Mehl', 'kg'],
+      [3, 'Kaffee', 'kg'],
+      [4, 'Tiefkühlware', 'kg'],
+      [5, 'Ersatzteile', 'Stück'],
+    ],
+  ),
+  insert(
+    'lieferungen',
+    ['lieferung_id', 'ankunft', 'schiff_id', 'station_id'],
+    [
+      [1, '2025-11-20', 1, 1],
+      [2, '2025-12-02', 2, 3],
+      [3, '2025-12-18', 1, 2],
+      [4, '2026-01-14', 2, 1],
+      [5, '2026-02-03', 3, 1],
+      [6, '2026-02-26', 1, 1],
+    ],
+  ),
+  insert(
+    'positionen',
+    ['lieferung_id', 'ware_id', 'menge_kisten'],
+    [
+      [1, 1, 40], [1, 2, 12], [1, 3, 6],
+      [2, 1, 55], [2, 4, 20],
+      [3, 1, 30], [3, 2, 8], [3, 5, 4],
+      [4, 2, 10], [4, 3, 4], [4, 4, 15],
+      [6, 1, 35], [6, 3, 5], [6, 5, 2],
+    ],
+  ),
+].join('\n');
+
 export interface DatabaseInfo {
   id: DbId;
   title: string;
@@ -527,6 +625,20 @@ export const DATABASES: Record<DbId, DatabaseInfo> = {
       statusereignisse: 'Protokoll jeder Statusänderung eines Tickets.',
     },
   },
+  lieferdb: {
+    id: 'lieferdb',
+    title: 'Lieferdatenbank (E.I.S.)',
+    description:
+      'Versorgungslieferungen an antarktische Stationen aus dem Unterricht (Einsatz 512-003/-004). STRICT-Tabellen mit Constraints; Lieferung 5 der MS FIG 512 hat noch keine Positionen.',
+    seedSql: lieferdbSchema + lieferdbData,
+    tableDescriptions: {
+      schiffe: 'Schiffe mit Flagge (Länderkürzel) und Kapitän/in (optional).',
+      stationen: 'Forschungsstationen mit Region.',
+      waren: 'Warenstamm. einheit: kg, Liter oder Stück (Standard kg).',
+      lieferungen: 'Eine Zeile pro Lieferung: Ankunft, Schiff, Station.',
+      positionen: 'Zwischentabelle Lieferung ↔ Ware mit Menge in Kisten. Schlüssel: (lieferung_id, ware_id).',
+    },
+  },
 };
 
-export const DB_IDS: DbId[] = ['vertrieb', 'forschung', 'support'];
+export const DB_IDS: DbId[] = ['vertrieb', 'forschung', 'support', 'lieferdb'];

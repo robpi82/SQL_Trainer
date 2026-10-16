@@ -25,3 +25,19 @@ export const structureOf = (table: string) => ({
        CASE WHEN pk > 0 THEN 1 ELSE 0 END AS primaerschluessel
 FROM pragma_table_info('${table}');`,
 });
+
+/** Prüft, ob eine Tabelle als STRICT angelegt wurde (SQLite ab 3.37). */
+export const strictOf = (table: string) => ({
+  label: `${table} ist STRICT`,
+  sql: `SELECT COUNT(*) AS strict_tabelle FROM pragma_table_list WHERE name = '${table}' AND strict = 1;`,
+  hint: `Die Tabelle ${table} soll eine STRICT-Tabelle sein: Schreibe STRICT hinter die schließende Klammer, also „) STRICT;“.`,
+});
+
+/** Prüft, ob es einen Index gibt, dessen erste Spalte `column` ist (Telefonbuch-Prinzip). */
+export const indexOn = (table: string, column: string) => ({
+  label: `Index auf ${table}.${column}`,
+  sql: `SELECT COUNT(*) > 0 AS index_vorhanden
+FROM pragma_index_list('${table}') AS il
+WHERE (SELECT ii.name FROM pragma_index_info(il.name) AS ii WHERE ii.seqno = 0) = '${column}';`,
+  hint: `Es gibt keinen Index, der mit der Spalte ${column} beginnt. Ein Index über (andere_spalte, ${column}) hilft bei der Suche nur nach ${column} nicht – wie ein Telefonbuch, das nach Nachnamen sortiert ist.`,
+});

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { DIFFICULTY_LABEL, TYPE_LABEL, exercisesOfLesson, lessonById, ORDERED_LESSONS } from '../content';
+import { COURSE_LESSONS, DIFFICULTY_LABEL, TYPE_LABEL, exercisesOfLesson, lessonById, lessonLabel, ORDERED_LESSONS } from '../content';
+import { ErmDiagram } from '../components/ErmDiagram';
 import { ExerciseWorkspace } from '../components/ExerciseWorkspace';
 import { LogicalOrder } from '../components/LogicalOrder';
 import { Markup, inline } from '../components/Markup';
@@ -35,17 +36,18 @@ export function LessonPage({ lessonId, section }: { lessonId?: string; section: 
   const all = exercisesOfLesson(lesson.id);
   const guided = all.find((e) => e.guided);
   const tasks = all.filter((e) => !e.guided);
-  const pos = ORDERED_LESSONS.findIndex((l) => l.id === lesson.id);
-  const prev = ORDERED_LESSONS[pos - 1];
-  const next = ORDERED_LESSONS[pos + 1];
+  const sequence = lesson.course ? COURSE_LESSONS : ORDERED_LESSONS;
+  const pos = sequence.findIndex((l) => l.id === lesson.id);
+  const prev = pos > 0 ? sequence[pos - 1] : undefined;
+  const next = pos >= 0 ? sequence[pos + 1] : undefined;
 
   return (
     <div className="page lesson">
       <nav className="breadcrumb small" aria-label="Brotkrümelnavigation">
-        <Link to="/lernpfad">Lernpfad</Link> › Modul {lesson.moduleId}
+        {lesson.course ? <Link to="/unterricht">Unterricht</Link> : <Link to="/lernpfad">Lernpfad</Link>} › {lessonLabel(lesson)}
       </nav>
       <h1>
-        <span className="muted">Modul {lesson.moduleId}:</span> {lesson.title}
+        <span className="muted">{lessonLabel(lesson)}:</span> {lesson.title}
       </h1>
       <nav className="toc small" aria-label="Abschnitte">
         <a href={`#/lektion/${lesson.id}?abschnitt=ziel`}>1. Lernziel</a>
@@ -82,6 +84,10 @@ export function LessonPage({ lessonId, section }: { lessonId?: string; section: 
             ))}
           </dl>
         )}
+        {lesson.course && (
+          <p className="small muted">Grundlage: {lesson.course.sources.join(' · ')}</p>
+        )}
+        {lesson.diagram === 'lieferdb-erm' && <ErmDiagram />}
         {lesson.logicalOrder && (
           <>
             <h3>Schreibreihenfolge und logische Verarbeitung</h3>
@@ -189,8 +195,8 @@ export function LessonPage({ lessonId, section }: { lessonId?: string; section: 
       </section>
 
       <div className="pager">
-        {prev ? <Link to={`/lektion/${prev.id}`}>← Modul {prev.moduleId}: {prev.title}</Link> : <span />}
-        {next ? <Link to={`/lektion/${next.id}`}>Modul {next.moduleId}: {next.title} →</Link> : <span />}
+        {prev ? <Link to={`/lektion/${prev.id}`}>← {lessonLabel(prev)}: {prev.title}</Link> : <span />}
+        {next ? <Link to={`/lektion/${next.id}`}>{lessonLabel(next)}: {next.title} →</Link> : <span />}
       </div>
     </div>
   );

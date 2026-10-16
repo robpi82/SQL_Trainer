@@ -1,4 +1,4 @@
-import { exerciseById, exercisesOfLesson, lessonById } from '../content';
+import { exerciseById, exercisesOfLesson, lessonById, lessonLabel } from '../content';
 import { ExerciseWorkspace, type WorkspaceMode } from '../components/ExerciseWorkspace';
 import { Link, navigate } from '../lib/router';
 import { useProgress } from '../progress/ProgressContext';
@@ -45,10 +45,12 @@ export function ExercisePage({ exerciseId, mode: rawMode }: { exerciseId?: strin
           <Link to="/wiederholen">Wiederholen</Link>
         ) : mode === 'frei' ? (
           <Link to="/ueben">Freies Üben</Link>
+        ) : lesson.course ? (
+          <Link to="/unterricht">Unterricht</Link>
         ) : (
           <Link to="/lernpfad">Lernpfad</Link>
         )}{' '}
-        › <Link to={`/lektion/${lesson.id}`}>Modul {lesson.moduleId}: {lesson.title}</Link> ›{' '}
+        › <Link to={`/lektion/${lesson.id}`}>{lessonLabel(lesson)}: {lesson.title}</Link> ›{' '}
         {mode === 'lernpfad' ? `Aufgabe ${idx + 1} von ${list.length}` : ex.title}
       </nav>
       <ExerciseWorkspace key={ex.id} exercise={ex} mode={mode} onNext={onNext} nextLabel={nextLabel} />

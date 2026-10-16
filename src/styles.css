@@ -352,3 +352,16 @@ legend { font-weight: 600; padding: 0 0.3em; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* ---------------- ERM-Grafik ---------------- */
+.erm { margin: 1rem 0; overflow-x: auto; }
+.erm svg { width: 100%; min-width: 640px; height: auto; display: block; }
+.erm-box { fill: var(--surface); stroke: var(--text); stroke-width: 1.2; }
+.erm-box-hl { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+.erm-head { fill: var(--surface-2); stroke: var(--text); stroke-width: 1.2; }
+.erm-title { font: 700 14px var(--font); fill: var(--text); }
+.erm-attr { font: 12.5px var(--mono); fill: var(--text); }
+.erm-fk { fill: var(--accent); font-weight: 700; font-size: 10.5px; }
+.erm-line { fill: none; stroke: var(--text); stroke-width: 1.4; }
+.erm-mark line { stroke: var(--text); stroke-width: 1.4; }
+.erm-card { font: 12px var(--font); fill: var(--muted); }

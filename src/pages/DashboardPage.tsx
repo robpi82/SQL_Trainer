@@ -1,9 +1,9 @@
-import { EXERCISES, MODULES, exerciseById, lessonById } from '../content';
+import { EXERCISES, MODULES, exerciseById, lessonById, lessonLabel } from '../content';
 import { ProgressBar } from '../components/ProgressBar';
 import { Link, navigate } from '../lib/router';
 import { STATUS_LABEL, dayString, type TaskStatus } from '../progress/model';
 import { useProgress } from '../progress/ProgressContext';
-import { conceptStats, continueTarget, dueReviews, moduleProgress, overallProgress, upcomingReviews } from '../progress/stats';
+import { conceptStats, continueTarget, courseProgress, dueReviews, moduleProgress, overallProgress, upcomingReviews } from '../progress/stats';
 
 const fmtDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
 
@@ -30,13 +30,13 @@ export function DashboardPage() {
           <h2>{started ? 'Weiterlernen' : 'Willkommen!'}</h2>
           {lastLesson ? (
             <p>
-              Zuletzt bearbeitet: <strong>Modul {lastLesson.moduleId} – {lastLesson.title}</strong>
+              Zuletzt bearbeitet: <strong>{lessonLabel(lastLesson)} – {lastLesson.title}</strong>
             </p>
           ) : (
             <p>Starte mit Modul 1. Jede Lektion erklärt ein Thema mit Beispiel und lässt dich danach selbst Abfragen schreiben.</p>
           )}
           <p className="small muted">
-            Als Nächstes: Modul {targetLesson.moduleId} – {targetLesson.title}
+            Als Nächstes im Lernpfad: {lessonLabel(targetLesson)} – {targetLesson.title}
             {target.exerciseId && <> · Aufgabe „{exerciseById.get(target.exerciseId)?.title}“</>}
           </p>
           <div className="btn-row">
@@ -136,6 +136,26 @@ export function DashboardPage() {
           </p>
         </section>
       </div>
+
+      <section className="card">
+        <h2>Unterricht</h2>
+        <p className="small muted">Lektionen und Übungen zu deinen Kurstagen – getrennt vom Lernpfad gezählt.</p>
+        <ul className="module-progress">
+          {courseProgress(state).map((c) => (
+            <li key={c.lesson.id}>
+              <span className="mp-title">
+                <Link to={`/lektion/${c.lesson.id}`}>
+                  {c.lesson.course!.label}: {c.lesson.title}
+                </Link>
+              </span>
+              <ProgressBar small percent={c.percent} label={`Fortschritt ${c.lesson.course!.label}`} />
+              <span className="small muted mp-text">
+                {c.counts.selbststaendig}/{c.total} selbstständig · {c.counts.mit_hilfe} mit Hilfe
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section className="card">
         <h2>Fortschritt je Modul</h2>
