@@ -211,3 +211,15 @@ React + TypeScript + Vite
 ```
 
 Lernfortschritt (localStorage) und Übungsdatenbanken (nur im Arbeitsspeicher des Workers) sind getrennt. Schreiboperationen betreffen nur die Arbeitskopie der jeweiligen Aufgabe bzw. der Sandbox.
+
+## Design „Space Academy“
+
+Standarddesign ist „Weltraum“. Oben rechts lässt sich jederzeit auf **Klassisch** (System, hell oder dunkel) umstellen.
+
+- **Sternenkarte** (Startseite): Jedes Sternsystem bündelt mehrere Module, jeder Planet ist eine Lektion. Ein Klick auf einen Planeten öffnet die Lektion. Das System „Station CBW“ enthält den Unterricht (Dezernat 512).
+- **Erkundet %** entspricht den Fortschrittspunkten: selbstständig gelöst 1 Punkt, mit Hilfe ½ Punkt.
+- **Schloss-Symbol** heißt „Vorwissen empfohlen“. Es sperrt nichts, alle Systeme bleiben frei zugänglich.
+- **XP**: selbstständig gelöst 50 XP, mit Hilfe 20 XP, Musterlösung angesehen 0 XP. Gezählt wird der beste Status je Aufgabe, mehrfaches Lösen bringt keine zusätzlichen XP.
+- **Serie**: Tage in Folge, an denen mindestens eine Aufgabe richtig gelöst wurde.
+- **Medaillen**: feste Kriterien, einsehbar unter „Medaillen“. Es gibt keine Ranglisten und keine Bezahlinhalte.
+- **Smartphone**: Die Karte wird zur Systemliste, unten erscheint eine Navigationsleiste.
