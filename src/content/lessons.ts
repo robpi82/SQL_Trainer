@@ -554,6 +554,77 @@ export const LESSONS: Lesson[] = [
   },
 
   {
+    id: 'm13',
+    moduleId: 13,
+    title: 'Fallunterscheidungen mit CASE WHEN',
+    goals: [
+      'Du erzeugst mit CASE WHEN neue Werte abhängig von Bedingungen, z. B. Klassen oder Kategorien.',
+      'Du kennst die allgemeine und die einfache Form von CASE und weißt, warum die Reihenfolge der WHEN-Zweige zählt.',
+      'Du behandelst NULL und den fehlenden ELSE-Zweig bewusst.',
+      'Du verwendest CASE in ORDER BY und für bedingtes Zählen in Aggregatfunktionen.',
+    ],
+    explanation: [
+      '`CASE` ist das „Wenn-dann“ von SQL. Es ist ein **Ausdruck**: Für jede Zeile liefert er genau **einen Wert**. Deshalb kann CASE überall stehen, wo ein Wert stehen darf – in SELECT, in ORDER BY, in WHERE oder in einer Aggregatfunktion.',
+      '**Allgemeine Form:** `CASE WHEN bedingung1 THEN wert1 WHEN bedingung2 THEN wert2 ELSE wert_sonst END`. Die Bedingungen werden **von oben nach unten** geprüft, und die **erste** wahre gewinnt. Alle weiteren Zweige werden ignoriert.',
+      "**Einfache Form:** `CASE spalte WHEN 'a' THEN … WHEN 'b' THEN … END`. Sie vergleicht eine Spalte nur auf Gleichheit mit festen Werten – kürzer, aber weniger flexibel.",
+      '**Reihenfolge bei Bereichen:** Bei Grenzwerten prüft man von der strengsten zur schwächsten Bedingung: erst `>= 500`, dann `>= 50`. Umgekehrt würde schon `>= 50` für 1299 € zutreffen.',
+      '**ELSE und NULL:** Trifft kein Zweig zu und fehlt ELSE, ergibt CASE **NULL**. Und auch in CASE gilt: `WHEN spalte = NULL` ist nie wahr – verwende `WHEN spalte IS NULL`. NULL-Fälle sollte man meist als ersten Zweig behandeln.',
+      "**Bedingtes Zählen:** `SUM(CASE WHEN status = 'geliefert' THEN 1 ELSE 0 END)` zählt in einer Gruppe nur die passenden Zeilen. So entstehen mehrere Teilzahlen in einer einzigen Abfrage – sehr häufig in Berichten.",
+      '**Fachliche Sortierung:** `ORDER BY CASE status WHEN \'offen\' THEN 1 … END` sortiert nach einer selbst festgelegten Reihenfolge statt alphabetisch.',
+      'Alle Zweige sollten denselben Datentyp liefern (nur Texte oder nur Zahlen). SQLite ist hier nachsichtig, andere Datenbanken melden sonst einen Fehler.',
+    ],
+    terms: [
+      { term: 'CASE-Ausdruck', definition: 'Liefert pro Zeile genau einen Wert, abhängig von Bedingungen.' },
+      { term: 'WHEN … THEN …', definition: 'Ein Zweig: Bedingung und Wert, wenn sie zutrifft.' },
+      { term: 'ELSE', definition: 'Wert, wenn kein Zweig zutrifft. Fehlt ELSE, ist das Ergebnis NULL.' },
+      { term: 'END', definition: 'Schließt den CASE-Ausdruck ab – danach folgt meist ein Alias mit AS.' },
+      { term: 'Bedingtes Zählen', definition: 'Aggregatfunktion über einen CASE-Ausdruck, z. B. SUM(CASE WHEN … THEN 1 ELSE 0 END).' },
+    ],
+    example: {
+      db: 'vertrieb',
+      tables: [{ label: 'produkte (Auszug)', sql: 'SELECT produkt_id, name, kategorie, preis FROM produkte;' }],
+      sql: "SELECT name, preis,\n       CASE\n         WHEN preis >= 500 THEN 'teuer'\n         WHEN preis >= 50 THEN 'mittel'\n         ELSE 'günstig'\n       END AS preisklasse\nFROM produkte\nORDER BY preis DESC;",
+    },
+    steps: [
+      { code: 'CASE', text: 'Beginn der Fallunterscheidung – für jede Zeile einzeln.' },
+      { code: "WHEN preis >= 500 THEN 'teuer'", text: 'Erster Zweig: Trifft er zu, ist das Ergebnis „teuer“ und die übrigen Zweige werden nicht mehr geprüft.' },
+      { code: "WHEN preis >= 50 THEN 'mittel'", text: 'Wird nur noch für Zeilen geprüft, die nicht schon „teuer“ sind – also für Preise unter 500.' },
+      { code: "ELSE 'günstig'", text: 'Alle übrigen Zeilen (unter 50 €).' },
+      { code: 'END AS preisklasse', text: 'Ende des Ausdrucks; die neue Spalte heißt „preisklasse“.' },
+    ],
+    logicalOrder: ['FROM', 'SELECT', 'ORDER BY'],
+    extraSections: [
+      {
+        title: 'Beispiel: bedingtes Zählen je Gruppe',
+        paragraphs: ['Je Kategorie die Anzahl aller Tickets und davon die offenen bzw. hoch priorisierten – in einer einzigen Abfrage. Tickets ohne Kategorie bilden eine eigene Gruppe mit NULL.'],
+        db: 'support',
+        sql: "SELECT kategorie_id,\n       COUNT(*) AS tickets,\n       SUM(CASE WHEN status = 'offen' THEN 1 ELSE 0 END) AS offen,\n       SUM(CASE WHEN prioritaet = 'hoch' THEN 1 ELSE 0 END) AS hoch\nFROM tickets\nGROUP BY kategorie_id;",
+      },
+      {
+        title: 'Beispiel: fehlendes ELSE ergibt NULL',
+        paragraphs: ['Ohne ELSE erhalten Zeilen, auf die kein Zweig passt, den Wert NULL. Hier betrifft das alle Produkte unter 500 €.'],
+        db: 'vertrieb',
+        sql: "SELECT name, preis,\n       CASE WHEN preis >= 500 THEN 'teuer' END AS markierung\nFROM produkte;",
+      },
+    ],
+    dialectNotes: [
+      'CASE WHEN ist Standard-SQL und funktioniert in SQLite, MySQL, PostgreSQL und SQL Server gleich.',
+      'Kurzformen für genau zwei Fälle: MySQL `IF(bedingung, a, b)`, SQL Server `IIF(bedingung, a, b)`, SQLite ab Version 3.32 ebenfalls `iif(…)`. CASE ist portabler.',
+      "In SQLite und MySQL sind Bedingungen Zahlen (wahr = 1, falsch = 0), deshalb funktioniert dort auch `SUM(status = 'geliefert')`. PostgreSQL und SQL Server erlauben das nicht – dort CASE verwenden oder in PostgreSQL `COUNT(*) FILTER (WHERE …)`.",
+    ],
+    summary: {
+      merksatz: 'CASE liefert pro Zeile einen Wert: Die erste zutreffende WHEN-Bedingung gewinnt, ohne ELSE entsteht NULL.',
+      fehler: [
+        'Bereichsgrenzen in falscher Reihenfolge (erst `>= 50`, dann `>= 500`) – der zweite Zweig wird nie erreicht.',
+        '`WHEN spalte = NULL` bzw. `CASE spalte WHEN NULL` – beides ist nie wahr. Richtig: `WHEN spalte IS NULL`.',
+        'ELSE vergessen und unbemerkt NULL-Werte erzeugen.',
+        '`END` vergessen (Syntaxfehler) oder den Alias weglassen.',
+        'Bei bedingtem Zählen mit SUM das `ELSE 0` weglassen – dann kann NULL statt 0 herauskommen.',
+      ],
+    },
+  },
+
+  {
     id: 'm14',
     moduleId: 14,
     title: 'INSERT, UPDATE und DELETE',

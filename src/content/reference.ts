@@ -193,9 +193,10 @@ export const REFERENCE: ReferenceEntry[] = [
   {
     id: 'case', title: 'CASE WHEN', category: 'Funktionen', moduleId: 13, db: 'vertrieb',
     syntax: "CASE\n  WHEN bedingung1 THEN ergebnis1\n  WHEN bedingung2 THEN ergebnis2\n  ELSE ergebnis_sonst\nEND",
-    explanation: 'Fallunterscheidung innerhalb einer Abfrage. Die erste zutreffende Bedingung gewinnt. (Ausführliche Lektion geplant.)',
+    explanation: 'Fallunterscheidung innerhalb einer Abfrage: liefert pro Zeile einen Wert. Die erste zutreffende Bedingung gewinnt, ohne ELSE entsteht NULL. Auch in ORDER BY und in Aggregaten nutzbar (bedingtes Zählen).',
     example: "SELECT name, preis,\n  CASE WHEN preis >= 500 THEN 'teuer'\n       WHEN preis >= 50 THEN 'mittel'\n       ELSE 'günstig' END AS preisklasse\nFROM produkte;",
-    mistakes: ['END vergessen.', 'Reihenfolge der WHEN-Zweige: die erste wahre Bedingung zählt.'],
+    mistakes: ['END vergessen.', 'Reihenfolge der WHEN-Zweige: die erste wahre Bedingung zählt.', 'WHEN spalte = NULL ist nie wahr – IS NULL verwenden.'],
+    dialect: 'MySQL: IF(b, x, y), SQL Server: IIF(b, x, y). CASE funktioniert überall gleich.',
   },
   {
     id: 'insert', title: 'INSERT', category: 'Daten ändern', moduleId: 14, db: 'vertrieb',

@@ -10,8 +10,8 @@ Eine deutschsprachige Lern-App für SQL. Du schreibst echte Abfragen, sie werden
 
 | Bereich | Stand |
 |---|---|
-| Lernpfad | Module 1–12 und 14 vollständig ausgearbeitet (Lernziel → Erklärung → Beispiel → Schritt für Schritt → angeleitete Übung → Aufgaben → Zusammenfassung) |
-| Aufgaben | **88 Aufgaben** (82 davon in den Modulen 1–12: Grundlagen bis JOIN und Unterabfragen), leicht/mittel/anspruchsvoll |
+| Lernpfad | Module 1–14 vollständig ausgearbeitet (Lernziel → Erklärung → Beispiel → Schritt für Schritt → angeleitete Übung → Aufgaben → Zusammenfassung) |
+| Aufgaben | **97 Aufgaben** (82 davon in den Modulen 1–12: Grundlagen bis JOIN und Unterabfragen, 9 zu CASE WHEN), leicht/mittel/anspruchsvoll |
 | Aufgabentypen | Abfrage schreiben, Fehler korrigieren, Abfrage ergänzen, Ergebnis vorhersagen, Erklären (Selbsteinschätzung mit Musterantwort) |
 | Prüfung | Ergebnisvergleich mit Duplikaten, optionaler Reihenfolge- und Spaltennamenprüfung, zusätzlichen Testdaten, Zustandsprüfung für INSERT/UPDATE/DELETE |
 | Hilfen | 3 Stufen (Denkanstoß → Schlüsselwörter → Gerüst), Musterlösung erst nach Bestätigung |
@@ -20,7 +20,7 @@ Eine deutschsprachige Lern-App für SQL. Du schreibst echte Abfragen, sie werden
 | Speicherung | Fortschritt dauerhaft im Browser (localStorage), JSON-Export/-Import, Zurücksetzen mit Bestätigung |
 | Oberfläche | Hell/Dunkel, Tastaturbedienung (Strg+Enter, Strg+Umschalt+Enter), Desktop und Tablet |
 
-**Noch nicht enthalten (als „geplant“ markiert):** Modul 13 (CASE WHEN), Modul 15 (CREATE TABLE & Constraints), Modul 16 (Praxisprojekte), CTEs und Window Functions. CASE und CREATE TABLE stehen bereits im Nachschlagewerk und lassen sich in der Sandbox ausprobieren.
+**Noch nicht enthalten (als „geplant“ markiert):** Modul 15 (CREATE TABLE & Constraints), Modul 16 (Praxisprojekte), CTEs und Window Functions. CREATE TABLE steht bereits im Nachschlagewerk und lässt sich in der Sandbox ausprobieren.
 
 ---
 

@@ -20,8 +20,13 @@ describe('Lektionen und Nachschlagewerk', () => {
   });
   for (const l of LESSONS) {
     it(`${l.id}: Beispiel-SQL ist ausführbar`, async () => {
-      for (const sql of [...l.example.tables.map((t) => t.sql), l.example.sql, ...(l.extraSections ?? []).filter((s) => s.sql).map((s) => s.sql!)]) {
-        const r = await backend.isolated(l.example.db, sql);
+      const queries = [
+        ...l.example.tables.map((t) => ({ db: l.example.db, sql: t.sql })),
+        { db: l.example.db, sql: l.example.sql },
+        ...(l.extraSections ?? []).filter((s) => s.sql).map((s) => ({ db: s.db ?? l.example.db, sql: s.sql! })),
+      ];
+      for (const { db, sql } of queries) {
+        const r = await backend.isolated(db, sql);
         expect(r.main.ok, `${l.id}: ${sql} ${r.main.ok ? '' : r.main.error}`).toBe(true);
       }
     });

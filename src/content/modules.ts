@@ -14,7 +14,7 @@ export const MODULES: ModuleInfo[] = [
   { id: 10, title: 'GROUP BY und HAVING', short: 'Gruppieren', status: 'verfügbar', lessonId: 'm10' },
   { id: 11, title: 'INNER JOIN und LEFT JOIN', short: 'JOINs', status: 'verfügbar', lessonId: 'm11' },
   { id: 12, title: 'Unterabfragen: skalar, IN und EXISTS', short: 'Unterabfragen', status: 'verfügbar', lessonId: 'm12' },
-  { id: 13, title: 'CASE WHEN', short: 'CASE', status: 'geplant' },
+  { id: 13, title: 'Fallunterscheidungen mit CASE WHEN', short: 'CASE', status: 'verfügbar', lessonId: 'm13' },
   { id: 14, title: 'INSERT, UPDATE und DELETE', short: 'Daten ändern', status: 'verfügbar', lessonId: 'm14' },
   { id: 15, title: 'CREATE TABLE, Constraints und Beziehungen', short: 'DDL', status: 'geplant' },
   { id: 16, title: 'Gemischte Analyseaufgaben und Praxisprojekte', short: 'Praxis', status: 'geplant' },
