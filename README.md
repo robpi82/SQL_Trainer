@@ -25,6 +25,14 @@ Eine deutschsprachige Lern-App für SQL. Du schreibst echte Abfragen, sie werden
 
 ---
 
+## Online-Version
+
+**<https://robpi82.github.io/SQL_Trainer/>** – läuft direkt im Browser (PC, Tablet, Handy), ohne Installation.
+Jeder Push auf `main` wird automatisch getestet, gebaut und veröffentlicht (`.github/workflows/pages.yml`).
+Der Fortschritt wird pro Browser gespeichert; zum Übertragen zwischen Geräten „Fortschritt & Daten → Exportieren/Importieren“ nutzen.
+
+---
+
 ## Start unter Windows
 
 ### 1. Voraussetzungen
